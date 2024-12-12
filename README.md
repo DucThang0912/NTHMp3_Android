@@ -7,5 +7,8 @@ Các thành viên:
  - Đinh Hoàng Thanh Phong - 2180609100
 
 Ứng dụng nghe nhạc trực tuyến
-#Database
+
+# Database
+
+Sơ đồ (ERD):
 ![image](https://github.com/user-attachments/assets/fd3252e8-a66b-4e02-b884-100c749cc3f1)
