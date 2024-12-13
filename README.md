@@ -1,16 +1,14 @@
-# nthmusicmp3
+# NTHMp3_Android
 
-A new Flutter project.
+# Nhóm 4NTH
+Các thành viên:
+ - Nguyễn Đức Thắng - 2180608620
+ - Ngô Văn Huy Hoàng - 2180608513
+ - Đinh Hoàng Thanh Phong - 2180609100
 
-## Getting Started
+Ứng dụng nghe nhạc trực tuyến
 
-This project is a starting point for a Flutter application.
+# Database
 
-A few resources to get you started if this is your first Flutter project:
-
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
-
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+Sơ đồ (ERD):
+![image](https://github.com/user-attachments/assets/fd3252e8-a66b-4e02-b884-100c749cc3f1)
