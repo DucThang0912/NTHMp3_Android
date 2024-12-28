@@ -11,4 +11,5 @@ Các thành viên:
 # Database
 
 Sơ đồ (ERD):
-![image](https://github.com/user-attachments/assets/fd3252e8-a66b-4e02-b884-100c749cc3f1)
+![image](https://github.com/user-attachments/assets/26875799-eaa5-4df5-9125-56d38baf20dd)
+
