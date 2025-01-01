@@ -1,5 +1,6 @@
 package com.app.nth_mp3.model;
 
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.JoinColumn;
@@ -18,6 +19,7 @@ import lombok.Setter;
 @Table(name = "song")
 public class Song extends Base {
 
+    @Column(nullable = false)
     private String title; // tên bài hát
 
     @ManyToOne(fetch = FetchType.LAZY)
@@ -25,18 +27,21 @@ public class Song extends Base {
     private Artist artist; // người sáng tác bài hát
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "album_id", nullable = false)
+    @JoinColumn(name = "album_id", nullable = true)
     private Album album; // album chứa bài hát
-    
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "genre_id", nullable = false)
     private Genre genre; // thể loại bài hát
 
-    private String duration; // thời gian bài hát
+    @Column(nullable = false)
+    private int duration; // thời gian bài hát tính bằng giây
 
+    @Column(nullable = false)
     private String filePath; // đường dẫn âm thanh bài hát
 
     private String lyrics; // lời bài hát
 
-    private Integer playCount; // số lần nghe
+    private int playCount; // số lần nghe
+
 }

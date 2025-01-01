@@ -22,6 +22,8 @@ public class User extends Base {
 
     private String password; // mật khẩu
 
+    private String fullName; // họ tên
+
     private String email; // email
 
     private String avatar; // avatar
