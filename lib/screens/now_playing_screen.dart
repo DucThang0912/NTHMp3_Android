@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:lottie/lottie.dart';
 import '../constants/colors.dart';
-import '../widgets/main_screen_bottom_nav.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 class NowPlayingScreen extends StatefulWidget {
@@ -30,7 +29,7 @@ class _NowPlayingScreenState extends State<NowPlayingScreen> with SingleTickerPr
     
     _slideAnimation = Tween<Offset>(
       begin: const Offset(0, 0),
-      end: const Offset(0, 1),
+      end: const Offset(0, 3),
     ).animate(CurvedAnimation(
       parent: _animationController,
       curve: Curves.easeInOut,
@@ -110,6 +109,7 @@ class _NowPlayingScreenState extends State<NowPlayingScreen> with SingleTickerPr
             fontSize: 16,
           ),
         ),
+        const SizedBox(height: 30),
       ],
     );
   }
@@ -252,10 +252,8 @@ class _NowPlayingScreenState extends State<NowPlayingScreen> with SingleTickerPr
   }
 
   Widget _buildLyricsView() {
-    final bottomPadding = MediaQuery.of(context).padding.bottom;
-    
     return Container(
-      padding: EdgeInsets.fromLTRB(24, 24, 24, 200 + bottomPadding),
+      padding: const EdgeInsets.fromLTRB(24, 24, 24, 200),
       child: Column(
         children: [
           Text(
@@ -266,7 +264,7 @@ class _NowPlayingScreenState extends State<NowPlayingScreen> with SingleTickerPr
               fontWeight: FontWeight.bold,
             ),
           ),
-          const SizedBox(height: 40),
+          const SizedBox(height: 20),
           Expanded(
             child: Container(
               width: double.infinity,
@@ -274,7 +272,6 @@ class _NowPlayingScreenState extends State<NowPlayingScreen> with SingleTickerPr
                 color: AppColors.surface.withOpacity(0.3),
                 borderRadius: BorderRadius.circular(16),
               ),
-              margin: const EdgeInsets.only(bottom: 32),
               padding: const EdgeInsets.all(16),
               child: Center(
                 child: Text(
@@ -287,6 +284,7 @@ class _NowPlayingScreenState extends State<NowPlayingScreen> with SingleTickerPr
               ),
             ),
           ),
+          const SizedBox(height: 30),
         ],
       ),
     );
@@ -310,8 +308,6 @@ class _NowPlayingScreenState extends State<NowPlayingScreen> with SingleTickerPr
                       Column(
                         children: [
                           _buildMusicInfo(),
-                          const SizedBox(height: 30),
-                          const Spacer(),
                         ],
                       ),
                       
@@ -320,29 +316,36 @@ class _NowPlayingScreenState extends State<NowPlayingScreen> with SingleTickerPr
                     ],
                   ),
                   
-                  // Controls
-                  Positioned(
-                    left: 0,
-                    right: 0,
-                    top: MediaQuery.of(context).size.height * 0.45,
-                    child: SlideTransition(
-                      position: _slideAnimation,
-                      child: Container(
-                        color: AppColors.background,
-                        padding: const EdgeInsets.only(bottom: 20),
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Padding(
-                              padding: const EdgeInsets.symmetric(horizontal: 24),
-                              child: _buildProgressBar(),
-                            ),
-                            const SizedBox(height: 20),
-                            _buildControls(),
-                          ],
+                  // Điều chỉnh vị trí controls
+                  AnimatedBuilder(
+                    animation: _pageController,
+                    builder: (context, child) {
+                      final page = _pageController.page ?? 0;
+                      // Điều chỉnh vị trí ban đầu và khoảng cách di chuyển
+                      final topPadding = MediaQuery.of(context).size.height * 0.55; // Tăng lên để không che text
+                      final bottomPadding = MediaQuery.of(context).size.height * 0.65; // Giảm xuống để không vượt quá màn hình
+                      final top = topPadding + (bottomPadding - topPadding) * page;
+                      
+                      return Positioned(
+                        left: 0,
+                        right: 0,
+                        top: top,
+                        child: Container(
+                          color: AppColors.background,
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Padding(
+                                padding: const EdgeInsets.symmetric(horizontal: 24),
+                                child: _buildProgressBar(),
+                              ),
+                              const SizedBox(height: 20),
+                              _buildControls(),
+                            ],
+                          ),
                         ),
-                      ),
-                    ),
+                      );
+                    },
                   ),
                 ],
               ),
