@@ -1,10 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:glassmorphism/glassmorphism.dart';
 import '../../../constants/colors.dart';
-import '../widgets/custom_text_field.dart';
-import '../widgets/gradient_button.dart';
 import 'login_screen.dart';
+import '../../../screens/home_screen.dart';
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
@@ -14,120 +13,304 @@ class RegisterScreen extends StatefulWidget {
 }
 
 class _RegisterScreenState extends State<RegisterScreen> {
-  final TextEditingController _nameController = TextEditingController();
+  final TextEditingController _fullNameController = TextEditingController();
+  final TextEditingController _phoneController = TextEditingController();
+  final TextEditingController _usernameController = TextEditingController();
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
-  final TextEditingController _confirmPasswordController = TextEditingController();
+
+  @override
+  void dispose() {
+    _fullNameController.dispose();
+    _phoneController.dispose();
+    _usernameController.dispose();
+    _emailController.dispose();
+    _passwordController.dispose();
+    super.dispose();
+  }
+
+  Widget _buildTextField({
+    required String hintText,
+    required TextEditingController controller,
+    required Widget prefixIcon,
+    bool obscureText = false,
+    TextInputType? keyboardType,
+  }) {
+    return Container(
+      margin: const EdgeInsets.symmetric(vertical: 10),
+      child: GlassmorphicContainer(
+        width: double.infinity,
+        height: 60,
+        borderRadius: 15,
+        blur: 10,
+        alignment: Alignment.center,
+        border: 1,
+        linearGradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            Colors.white.withOpacity(0.15),
+            Colors.white.withOpacity(0.05),
+          ],
+        ),
+        borderGradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            Colors.white.withOpacity(0.3),
+            Colors.white.withOpacity(0.1),
+          ],
+        ),
+        child: Center(
+          child: TextField(
+            controller: controller,
+            obscureText: obscureText,
+            keyboardType: keyboardType,
+            style: GoogleFonts.montserrat(
+              color: Colors.white,
+              fontSize: 16,
+            ),
+            decoration: InputDecoration(
+              isDense: true,
+              hintText: hintText,
+              hintStyle: GoogleFonts.montserrat(
+                color: Colors.white70,
+                fontSize: 16,
+              ),
+              prefixIcon: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 15),
+                child: prefixIcon,
+              ),
+              prefixIconConstraints: const BoxConstraints(
+                minWidth: 50,
+                minHeight: 25,
+              ),
+              border: InputBorder.none,
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: 20,
+                vertical: 16,
+              ),
+              alignLabelWithHint: true,
+            ),
+            textAlignVertical: TextAlignVertical.center,
+          ),
+        ),
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      decoration: const BoxDecoration(gradient: AppColors.mainGradient),
-      child: Scaffold(
-        backgroundColor: Colors.transparent,
-        appBar: AppBar(
-          backgroundColor: Colors.transparent,
-          elevation: 0,
-          leading: IconButton(
-            icon: const Icon(Icons.arrow_back_ios, color: Colors.white),
-            onPressed: () => Navigator.pop(context),
-          ),
+    final screenHeight = MediaQuery.of(context).size.height;
+    
+    return Scaffold(
+      resizeToAvoidBottomInset: false,
+      body: Container(
+        height: screenHeight,
+        decoration: const BoxDecoration(
+          gradient: AppColors.mainGradient,
         ),
-        body: SafeArea(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.all(20),
-            child: Column(
-              children: [
-                const SizedBox(height: 40),
-                Text(
-                  'Tạo tài khoản mới',
-                  style: GoogleFonts.poppins(
-                    color: Colors.white,
-                    fontSize: 32,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                const SizedBox(height: 30),
-                Container(
-                  decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                  padding: const EdgeInsets.all(20),
-                  child: Column(
-                    children: [
-                      CustomTextField(
-                        hintText: 'Họ và tên',
-                        controller: _nameController,
-                        prefixIcon: const Icon(FontAwesomeIcons.user, color: Colors.white70),
-                      ),
-                      const SizedBox(height: 15),
-                      CustomTextField(
-                        hintText: 'Email',
-                        controller: _emailController,
-                        prefixIcon: const Icon(FontAwesomeIcons.envelope, color: Colors.white70),
-                        keyboardType: TextInputType.emailAddress,
-                      ),
-                      const SizedBox(height: 15),
-                      CustomTextField(
-                        hintText: 'Mật khẩu',
-                        obscureText: true,
-                        controller: _passwordController,
-                        prefixIcon: const Icon(FontAwesomeIcons.lock, color: Colors.white70),
-                      ),
-                      const SizedBox(height: 15),
-                      CustomTextField(
-                        hintText: 'Xác nhận mật khẩu',
-                        obscureText: true,
-                        controller: _confirmPasswordController,
-                        prefixIcon: const Icon(FontAwesomeIcons.lock, color: Colors.white70),
-                      ),
+        child: Stack(
+          children: [
+            // Hiệu ứng ánh sáng 1
+            Positioned(
+              top: -100,
+              right: -100,
+              child: Container(
+                width: 300,
+                height: 300,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  gradient: RadialGradient(
+                    colors: [
+                      AppColors.glowColors['purple']!.withOpacity(0.2),
+                      AppColors.glowColors['purple']!.withOpacity(0.0),
                     ],
                   ),
                 ),
-                const SizedBox(height: 30),
-                SizedBox(
-                  width: double.infinity,
-                  child: GradientButton(
-                    text: 'Đăng ký',
-                    onPressed: () {
-                      Navigator.pushReplacement(
-                        context,
-                        MaterialPageRoute(builder: (context) => const LoginScreen()),
-                      );
-                    },
+              ),
+            ),
+            // Hiệu ứng ánh sáng 2
+            Positioned(
+              bottom: screenHeight * 0.3,
+              left: -150,
+              child: Container(
+                width: 350,
+                height: 350,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  gradient: RadialGradient(
+                    colors: [
+                      AppColors.glowColors['blue']!.withOpacity(0.2),
+                      AppColors.glowColors['blue']!.withOpacity(0.0),
+                    ],
                   ),
                 ),
-                const SizedBox(height: 20),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
+              ),
+            ),
+            SafeArea(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      'Đã có tài khoản? ',
-                      style: GoogleFonts.poppins(
-                        color: Colors.white70,
+                    // Header
+                    Row(
+                      children: [
+                        IconButton(
+                          icon: const Icon(Icons.arrow_back_ios_new, color: Colors.white),
+                          onPressed: () => Navigator.pop(context),
+                        ),
+                        const SizedBox(width: 8),
+                        ShaderMask(
+                          shaderCallback: (bounds) => AppColors.buttonGradient.createShader(bounds),
+                          child: Text(
+                            'Tạo tài khoản mới',
+                            style: GoogleFonts.montserrat(
+                              color: Colors.white,
+                              fontSize: 24,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 30),
+
+                    Expanded(
+                      child: SingleChildScrollView(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            // Welcome text
+                            ShaderMask(
+                              shaderCallback: (bounds) => AppColors.buttonGradient.createShader(bounds),
+                              child: Text(
+                                'Chào mừng bạn!',
+                                style: GoogleFonts.montserrat(
+                                  color: Colors.white,
+                                  fontSize: 32,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ),
+                            const SizedBox(height: 10),
+                            Text(
+                              'Hãy điền thông tin để tạo tài khoản',
+                              style: GoogleFonts.montserrat(
+                                color: AppColors.textSecondary,
+                                fontSize: 16,
+                              ),
+                            ),
+                            const SizedBox(height: 30),
+
+                            // Form fields
+                            _buildTextField(
+                              hintText: 'Họ và tên',
+                              controller: _fullNameController,
+                              prefixIcon: const Icon(Icons.person_outline, color: Colors.white70),
+                            ),
+                            _buildTextField(
+                              hintText: 'Số điện thoại',
+                              controller: _phoneController,
+                              prefixIcon: const Icon(Icons.phone_outlined, color: Colors.white70),
+                              keyboardType: TextInputType.phone,
+                            ),
+                            _buildTextField(
+                              hintText: 'Tài khoản',
+                              controller: _usernameController,
+                              prefixIcon: const Icon(Icons.account_circle_outlined, color: Colors.white70),
+                            ),
+                            _buildTextField(
+                              hintText: 'Email',
+                              controller: _emailController,
+                              prefixIcon: const Icon(Icons.email_outlined, color: Colors.white70),
+                              keyboardType: TextInputType.emailAddress,
+                            ),
+                            _buildTextField(
+                              hintText: 'Mật khẩu',
+                              controller: _passwordController,
+                              prefixIcon: const Icon(Icons.lock_outline, color: Colors.white70),
+                              obscureText: true,
+                            ),
+                            const SizedBox(height: 30),
+                          ],
+                        ),
                       ),
                     ),
-                    TextButton(
-                      onPressed: () {
-                        Navigator.pushReplacement(
-                          context,
-                          MaterialPageRoute(builder: (context) => const LoginScreen()),
-                        );
-                      },
-                      child: Text(
-                        'Đăng nhập',
-                        style: GoogleFonts.poppins(
-                          color: Colors.white,
-                          fontWeight: FontWeight.bold,
+
+                    // Register button
+                    Container(
+                      width: double.infinity,
+                      height: 55,
+                      decoration: BoxDecoration(
+                        gradient: AppColors.buttonGradient,
+                        borderRadius: BorderRadius.circular(15),
+                        boxShadow: [
+                          BoxShadow(
+                            color: AppColors.primary.withOpacity(0.3),
+                            blurRadius: 20,
+                            offset: const Offset(0, 10),
+                          ),
+                        ],
+                      ),
+                      child: ElevatedButton(
+                        onPressed: () {
+                          Navigator.pushAndRemoveUntil(
+                            context,
+                            MaterialPageRoute(builder: (context) => const HomeScreen()),
+                            (route) => false,
+                          );
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.transparent,
+                          shadowColor: Colors.transparent,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(15),
+                          ),
                         ),
+                        child: Text(
+                          'Đăng ký',
+                          style: GoogleFonts.montserrat(
+                            color: Colors.white,
+                            fontSize: 18,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                    ),
+
+                    // Login link
+                    Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Text(
+                            "Đã có tài khoản? ",
+                            style: GoogleFonts.montserrat(color: AppColors.textSecondary),
+                          ),
+                          TextButton(
+                            onPressed: () => Navigator.pop(context),
+                            child: ShaderMask(
+                              shaderCallback: (bounds) => AppColors.buttonGradient.createShader(bounds),
+                              child: Text(
+                                'Đăng nhập',
+                                style: GoogleFonts.montserrat(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                   ],
                 ),
-              ],
+              ),
             ),
-          ),
+          ],
         ),
       ),
     );

@@ -1,0 +1,85 @@
+Chức năng cốt lõi:
+
+Quản lý thư viện nhạc
+
+
+Quét và tổ chức các file nhạc trong bộ nhớ điện thoại
+Phân loại bài hát theo album, nghệ sĩ, thể loại
+Tạo và quản lý playlist cá nhân
+Thêm/xóa/sửa thông tin bài hát
+Hiển thị artwork album và thông tin metadata
+
+
+Phát nhạc
+
+
+Phát/tạm dừng/chuyển bài
+Điều chỉnh âm lượng và timeline
+Chế độ phát ngẫu nhiên và lặp lại
+Điều khiển từ notification và màn hình khóa
+Hiệu ứng crossfade khi chuyển bài
+Hỗ trợ nhiều định dạng âm thanh phổ biến
+
+
+Tùy chỉnh âm thanh
+
+
+Equalizer điều chỉnh dải tần
+Chế độ âm thanh định sẵn (Rock, Jazz, Classical...)
+Tăng cường âm bass
+Hiệu ứng âm thanh vòm
+Cân bằng trái phải
+
+
+Tính năng bổ sung
+
+
+Hiển thị lời bài hát đồng bộ
+Timer hẹn giờ tắt nhạc
+Chia sẻ bài hát
+Tải artwork và thông tin từ internet
+Đồng bộ với các thiết bị khác
+Widget điều khiển trên màn hình chính
+
+Cách hoạt động:
+
+Khởi động ứng dụng
+
+
+Load cấu hình và thiết lập người dùng
+Quét thư viện nhạc và cập nhật database
+Khởi tạo các service cần thiết
+
+
+Xử lý âm thanh
+
+
+Đọc và giải mã file nhạc
+Xử lý buffer và stream âm thanh
+Áp dụng các hiệu ứng và equalizer
+Đồng bộ với hệ thống âm thanh
+
+
+Quản lý bộ nhớ
+
+
+Cache artwork và metadata
+Tối ưu bộ nhớ đệm khi phát
+Tự động dọn cache định kỳ
+
+
+Xử lý đa nhiệm
+
+
+Chạy background service để phát nhạc
+Quản lý notification và điều khiển
+Tương tác với hệ thống và ứng dụng khác
+
+
+Trải nghiệm người dùng
+
+
+Giao diện mượt mà, dễ sử dụng
+Animation và hiệu ứng chuyển cảnh
+Phản hồi nhanh với tương tác người dùng
+Tối ưu hiệu năng và pin
