@@ -10,69 +10,116 @@ class NowPlayingScreen extends StatefulWidget {
   State<NowPlayingScreen> createState() => _NowPlayingScreenState();
 }
 
-class _NowPlayingScreenState extends State<NowPlayingScreen> with SingleTickerProviderStateMixin {
+class _NowPlayingScreenState extends State<NowPlayingScreen> 
+    with SingleTickerProviderStateMixin {
   bool isPlaying = false;
   bool isFavorite = false;
   double currentSliderValue = 0;
   
   final PageController _pageController = PageController();
-  late AnimationController _animationController;
-  late Animation<Offset> _slideAnimation;
+  late AnimationController _rotationController;
   
   @override
   void initState() {
     super.initState();
-    _animationController = AnimationController(
-      duration: const Duration(milliseconds: 300),
+    _rotationController = AnimationController(
+      duration: const Duration(seconds: 10),
       vsync: this,
-    );
-    
-    _slideAnimation = Tween<Offset>(
-      begin: const Offset(0, 0),
-      end: const Offset(0, 3),
-    ).animate(CurvedAnimation(
-      parent: _animationController,
-      curve: Curves.easeInOut,
-    ));
-
-    _pageController.addListener(() {
-      _animationController.value = _pageController.page ?? 0;
-    });
+    )..repeat();
   }
   
   @override
   void dispose() {
     _pageController.dispose();
-    _animationController.dispose();
+    _rotationController.dispose();
     super.dispose();
   }
 
-  Widget _buildHeader() {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          IconButton(
-            icon: const Icon(Icons.keyboard_arrow_down, color: Colors.white),
-            onPressed: () => Navigator.pop(context),
-          ),
-          const Text(
-            'Đang phát',
-            style: TextStyle(
-              color: Colors.white,
-              fontSize: 16,
-              fontWeight: FontWeight.bold,
+  Widget _buildRotatingAlbumArt() {
+    return AnimatedBuilder(
+      animation: _rotationController,
+      builder: (context, child) {
+        return Transform.rotate(
+          angle: _rotationController.value * 2 * 3.14159,
+          child: Container(
+            width: 280,
+            height: 280,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  Colors.purple.withOpacity(0.8),
+                  Colors.blue.withOpacity(0.8),
+                ],
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.purple.withOpacity(0.3),
+                  blurRadius: 15,
+                  offset: const Offset(0, 8),
+                ),
+              ],
+            ),
+            child: Stack(
+              alignment: Alignment.center,
+              children: [
+                // Outer ring
+                Container(
+                  width: 280,
+                  height: 280,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    border: Border.all(
+                      color: Colors.white.withOpacity(0.2),
+                      width: 2,
+                    ),
+                  ),
+                ),
+                // Inner circle (album art)
+                Container(
+                  width: 180,
+                  height: 180,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: Colors.white,
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.2),
+                        blurRadius: 10,
+                        offset: const Offset(0, 5),
+                      ),
+                    ],
+                  ),
+                  child: const Center(
+                    child: Icon(
+                      Icons.music_note,
+                      size: 80,
+                      color: Colors.grey,
+                    ),
+                  ),
+                ),
+                // Center dot
+                Container(
+                  width: 20,
+                  height: 20,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: Colors.white,
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.2),
+                        blurRadius: 5,
+                      ),
+                    ],
+                  ),
+                ),
+              ],
             ),
           ),
-          IconButton(
-            icon: const Icon(Icons.more_vert, color: Colors.white),
-            onPressed: () {
-              // Hiển thị menu tùy chọn
-            },
-          ),
-        ],
-      ),
+        );
+      },
     );
   }
 
@@ -81,30 +128,21 @@ class _NowPlayingScreenState extends State<NowPlayingScreen> with SingleTickerPr
       mainAxisSize: MainAxisSize.min,
       children: [
         Container(
-          width: 300,
-          height: 300,
           margin: const EdgeInsets.all(32),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(20),
-            color: AppColors.surface,
-          ),
-          child: Lottie.asset(
-            'assets/animations/musicDisc.json',
-            fit: BoxFit.cover,
-          ),
+          child: _buildRotatingAlbumArt(),
         ),
-        const Text(
+        Text(
           'Tên bài hát',
-          style: TextStyle(
+          style: GoogleFonts.montserrat(
             color: Colors.white,
             fontSize: 24,
             fontWeight: FontWeight.bold,
           ),
         ),
         const SizedBox(height: 8),
-        const Text(
+        Text(
           'Tên nghệ sĩ',
-          style: TextStyle(
+          style: GoogleFonts.montserrat(
             color: Colors.grey,
             fontSize: 16,
           ),
@@ -115,45 +153,54 @@ class _NowPlayingScreenState extends State<NowPlayingScreen> with SingleTickerPr
   }
 
   Widget _buildProgressBar() {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 24),
-      child: Column(
-        children: [
-          SliderTheme(
-            data: SliderTheme.of(context).copyWith(
-              activeTrackColor: AppColors.primary,
-              inactiveTrackColor: Colors.grey.withOpacity(0.3),
-              thumbColor: AppColors.primary,
-              trackHeight: 2.0,
+    return Column(
+      children: [
+        SliderTheme(
+          data: SliderTheme.of(context).copyWith(
+            activeTrackColor: Colors.purple,
+            inactiveTrackColor: Colors.grey.withOpacity(0.3),
+            thumbColor: Colors.white,
+            trackHeight: 2.0,
+            thumbShape: const RoundSliderThumbShape(
+              enabledThumbRadius: 6,
             ),
-            child: Slider(
-              value: currentSliderValue,
-              max: 100,
-              onChanged: (value) {
-                setState(() {
-                  currentSliderValue = value;
-                });
-              },
+            overlayShape: const RoundSliderOverlayShape(
+              overlayRadius: 12,
             ),
           ),
-          const Padding(
-            padding: EdgeInsets.symmetric(horizontal: 16),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  '0:00',
-                  style: TextStyle(color: Colors.grey),
-                ),
-                Text(
-                  '3:45',
-                  style: TextStyle(color: Colors.grey),
-                ),
-              ],
-            ),
+          child: Slider(
+            value: currentSliderValue,
+            max: 100,
+            onChanged: (value) {
+              setState(() {
+                currentSliderValue = value;
+              });
+            },
           ),
-        ],
-      ),
+        ),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 24),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                '0:00',
+                style: GoogleFonts.montserrat(
+                  color: Colors.grey,
+                  fontSize: 12,
+                ),
+              ),
+              Text(
+                '3:45',
+                style: GoogleFonts.montserrat(
+                  color: Colors.grey,
+                  fontSize: 12,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
     );
   }
 
@@ -164,7 +211,7 @@ class _NowPlayingScreenState extends State<NowPlayingScreen> with SingleTickerPr
         IconButton(
           icon: Icon(
             isFavorite ? Icons.favorite : Icons.favorite_border,
-            color: isFavorite ? AppColors.primary : Colors.white,
+            color: isFavorite ? Colors.purple : Colors.white,
             size: 30,
           ),
           onPressed: () {
@@ -175,41 +222,49 @@ class _NowPlayingScreenState extends State<NowPlayingScreen> with SingleTickerPr
         ),
         IconButton(
           icon: const Icon(Icons.skip_previous, color: Colors.white, size: 35),
-          onPressed: () {
-            // Chuyển về bài trước
-          },
+          onPressed: () {},
         ),
-        Container(
-          width: 70,
-          height: 70,
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            gradient: AppColors.buttonGradient,
-          ),
-          child: IconButton(
-            icon: Icon(
+        GestureDetector(
+          onTap: () {
+            setState(() {
+              isPlaying = !isPlaying;
+              if (isPlaying) {
+                _rotationController.repeat();
+              } else {
+                _rotationController.stop();
+              }
+            });
+          },
+          child: Container(
+            width: 70,
+            height: 70,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              gradient: LinearGradient(
+                colors: [Colors.purple.withOpacity(0.8), Colors.blue.withOpacity(0.8)],
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.purple.withOpacity(0.3),
+                  blurRadius: 15,
+                  offset: const Offset(0, 8),
+                ),
+              ],
+            ),
+            child: Icon(
               isPlaying ? Icons.pause : Icons.play_arrow,
               color: Colors.white,
               size: 35,
             ),
-            onPressed: () {
-              setState(() {
-                isPlaying = !isPlaying;
-              });
-            },
           ),
         ),
         IconButton(
           icon: const Icon(Icons.skip_next, color: Colors.white, size: 35),
-          onPressed: () {
-            // Chuyển đến bài tiếp theo
-          },
+          onPressed: () {},
         ),
         IconButton(
           icon: const Icon(Icons.repeat, color: Colors.white, size: 30),
-          onPressed: () {
-            // Thay đổi chế độ lặp lại
-          },
+          onPressed: () {},
         ),
       ],
     );
@@ -285,6 +340,33 @@ class _NowPlayingScreenState extends State<NowPlayingScreen> with SingleTickerPr
             ),
           ),
           const SizedBox(height: 30),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildHeader() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          IconButton(
+            icon: const Icon(Icons.keyboard_arrow_down, color: Colors.white),
+            onPressed: () => Navigator.pop(context),
+          ),
+          Text(
+            'Đang phát',
+            style: GoogleFonts.montserrat(
+              color: Colors.white,
+              fontSize: 16,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          IconButton(
+            icon: const Icon(Icons.more_vert, color: Colors.white),
+            onPressed: () {},
+          ),
         ],
       ),
     );

@@ -1,108 +1,228 @@
 import 'package:flutter/material.dart';
-import 'package:lottie/lottie.dart';
 import '../constants/colors.dart';
 import 'now_playing_screen.dart';
-import '../widgets/main_screen_bottom_nav.dart';
+import 'package:google_fonts/google_fonts.dart';
 
-class AlbumScreen extends StatelessWidget {
+class AlbumScreen extends StatefulWidget {
   const AlbumScreen({super.key});
 
-  Widget _buildHeader(BuildContext context) {
+  @override
+  State<AlbumScreen> createState() => _AlbumScreenState();
+}
+
+class _AlbumScreenState extends State<AlbumScreen> {
+  final ScrollController _scrollController = ScrollController();
+  bool _isCollapsed = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _scrollController.addListener(_onScroll);
+  }
+
+  void _onScroll() {
+    if (_scrollController.offset > 200 && !_isCollapsed) {
+      setState(() => _isCollapsed = true);
+    } else if (_scrollController.offset < 200 && _isCollapsed) {
+      setState(() => _isCollapsed = false);
+    }
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  Widget _buildHeader() {
     return Stack(
       children: [
-        // Album Cover
+        // Gradient Background
         Container(
-          height: 300,
-          width: double.infinity,
-          color: AppColors.surface
-        ),
-        // Back Button
-        Positioned(
-          top: 40,
-          left: 16,
-          child: IconButton(
-            icon: const Icon(Icons.arrow_back_ios, color: Colors.white),
-            onPressed: () => Navigator.pop(context),
+          height: 350,
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              colors: [
+                Colors.purple.withOpacity(0.8),
+                AppColors.background.withOpacity(0.0),
+              ],
+            ),
           ),
         ),
-        // Album Info
+        // Album Art
         Positioned(
-          bottom: 20,
+          top: 80,
           left: 20,
           right: 20,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+          child: Row(
             children: [
-              const Text(
-                'Tên Album',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 28,
-                  fontWeight: FontWeight.bold,
+              Hero(
+                tag: 'album_art',
+                child: Container(
+                  height: 180,
+                  width: 180,
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(20),
+                    gradient: LinearGradient(
+                      colors: [
+                        Colors.purple.withOpacity(0.7),
+                        Colors.blue.withOpacity(0.7),
+                      ],
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.purple.withOpacity(0.3),
+                        blurRadius: 15,
+                        offset: const Offset(0, 8),
+                      ),
+                    ],
+                  ),
+                  child: const Icon(
+                    Icons.music_note,
+                    color: Colors.white,
+                    size: 80,
+                  ),
                 ),
               ),
-              const SizedBox(height: 8),
-              Row(
-                children: [
-                  const Text(
-                    'Tên Nghệ Sĩ',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 16,
+              const SizedBox(width: 20),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'ALBUM',
+                      style: GoogleFonts.montserrat(
+                        color: Colors.white.withOpacity(0.7),
+                        fontSize: 14,
+                        letterSpacing: 2,
+                      ),
                     ),
-                  ),
-                  const SizedBox(width: 8),
-                  Text(
-                    '• 12 bài hát',
-                    style: TextStyle(
-                      color: Colors.white.withOpacity(0.8),
-                      fontSize: 16,
+                    const SizedBox(height: 8),
+                    Text(
+                      'Tên Album',
+                      style: GoogleFonts.montserrat(
+                        color: Colors.white,
+                        fontSize: 24,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
-                  ),
-                ],
+                    const SizedBox(height: 8),
+                    Text(
+                      'Nghệ sĩ • 2024',
+                      style: GoogleFonts.montserrat(
+                        color: Colors.white.withOpacity(0.7),
+                        fontSize: 14,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      '12 bài hát • 45 phút',
+                      style: GoogleFonts.montserrat(
+                        color: Colors.white.withOpacity(0.7),
+                        fontSize: 14,
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ],
+          ),
+        ),
+        // Back Button & More Options
+        Positioned(
+          top: 40,
+          left: 0,
+          right: 0,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Container(
+                  decoration: BoxDecoration(
+                    color: Colors.black.withOpacity(0.3),
+                    shape: BoxShape.circle,
+                  ),
+                  child: IconButton(
+                    icon: const Icon(Icons.arrow_back, color: Colors.white),
+                    onPressed: () => Navigator.pop(context),
+                  ),
+                ),
+                Container(
+                  decoration: BoxDecoration(
+                    color: Colors.black.withOpacity(0.3),
+                    shape: BoxShape.circle,
+                  ),
+                  child: IconButton(
+                    icon: const Icon(Icons.more_vert, color: Colors.white),
+                    onPressed: () {},
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ],
     );
   }
 
-  Widget _buildSongList(BuildContext context) {
+  Widget _buildSongList() {
     return ListView.builder(
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
       itemCount: 12,
       itemBuilder: (context, index) {
         return ListTile(
-          leading: Text(
-            '${index + 1}',
-            style: const TextStyle(
-              color: Colors.white,
-              fontSize: 16,
-              fontWeight: FontWeight.bold,
+          contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+          leading: Container(
+            width: 40,
+            height: 40,
+            decoration: BoxDecoration(
+              color: AppColors.surface,
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Center(
+              child: Text(
+                '${index + 1}',
+                style: GoogleFonts.montserrat(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
             ),
           ),
-          title: const Text(
-            'Tên bài hát',
-            style: TextStyle(color: Colors.white),
+          title: Text(
+            'Tên bài hát ${index + 1}',
+            style: GoogleFonts.montserrat(
+              color: Colors.white,
+              fontWeight: FontWeight.w500,
+            ),
           ),
           subtitle: Row(
             children: [
-              Icon(Icons.play_circle_filled, 
-                   color: Colors.grey, size: 16),
+              const Icon(Icons.headphones, color: Colors.grey, size: 14),
               const SizedBox(width: 4),
               Text(
-                '1.5M lượt nghe',
-                style: TextStyle(color: Colors.grey),
+                '${(index + 1) * 100}K',
+                style: GoogleFonts.montserrat(color: Colors.grey, fontSize: 12),
               ),
             ],
           ),
-          trailing: IconButton(
-            icon: const Icon(Icons.more_vert, color: Colors.grey),
-            onPressed: () {
-              // Hiển thị menu tùy chọn
-            },
+          trailing: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                '3:45',
+                style: GoogleFonts.montserrat(
+                  color: Colors.grey,
+                  fontSize: 12,
+                ),
+              ),
+              const SizedBox(width: 16),
+              const Icon(Icons.more_vert, color: Colors.grey),
+            ],
           ),
           onTap: () {
             Navigator.push(
@@ -117,48 +237,70 @@ class AlbumScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildControls() {
-    return Padding(
+  Widget _buildFloatingControls() {
+    return Container(
       padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [
+            AppColors.background.withOpacity(0),
+            AppColors.background,
+          ],
+        ),
+      ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
         children: [
           IconButton(
-            icon: const Icon(Icons.shuffle, color: Colors.white, size: 30),
-            onPressed: () {
-              // Phát ngẫu nhiên
-            },
+            icon: const Icon(Icons.shuffle_rounded, color: Colors.white, size: 28),
+            onPressed: () {},
           ),
           Container(
-            width: 150,
             height: 50,
+            width: 180,
             decoration: BoxDecoration(
-              gradient: AppColors.mainGradient,
-              borderRadius: BorderRadius.circular(25),
-            ),
-            child: ElevatedButton.icon(
-              onPressed: () {
-                // Phát tất cả
-              },
-              icon: const Icon(Icons.play_arrow, color: Colors.white),
-              label: const Text(
-                'Phát tất cả',
-                style: TextStyle(color: Colors.white),
+              gradient: const LinearGradient(
+                colors: [Colors.purple, Colors.blue],
               ),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.transparent,
-                shadowColor: Colors.transparent,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(25),
+              borderRadius: BorderRadius.circular(25),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.purple.withOpacity(0.3),
+                  blurRadius: 10,
+                  offset: const Offset(0, 5),
+                ),
+              ],
+            ),
+            child: Material(
+              color: Colors.transparent,
+              child: InkWell(
+                borderRadius: BorderRadius.circular(25),
+                onTap: () {},
+                child: const Center(
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(Icons.play_arrow_rounded, color: Colors.white, size: 30),
+                      SizedBox(width: 8),
+                      Text(
+                        'Phát tất cả',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ),
           ),
           IconButton(
-            icon: const Icon(Icons.favorite_border, color: Colors.white, size: 30),
-            onPressed: () {
-              // Thêm vào yêu thích
-            },
+            icon: const Icon(Icons.favorite_border_rounded, color: Colors.white, size: 28),
+            onPressed: () {},
           ),
         ],
       ),
@@ -169,17 +311,31 @@ class AlbumScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.background,
-      body: SingleChildScrollView(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            _buildHeader(context),
-            _buildControls(),
-            _buildSongList(context),
-          ],
-        ),
+      body: Stack(
+        children: [
+          CustomScrollView(
+            controller: _scrollController,
+            slivers: [
+              SliverToBoxAdapter(
+                child: Column(
+                  children: [
+                    _buildHeader(),
+                    const SizedBox(height: 20),
+                    _buildSongList(),
+                    const SizedBox(height: 100), // Space for floating controls
+                  ],
+                ),
+              ),
+            ],
+          ),
+          Positioned(
+            left: 0,
+            right: 0,
+            bottom: 0,
+            child: _buildFloatingControls(),
+          ),
+        ],
       ),
-      bottomNavigationBar: const MainScreenBottomNav(selectedIndex: -1),
     );
   }
 } 

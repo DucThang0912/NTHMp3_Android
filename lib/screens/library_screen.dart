@@ -1,105 +1,34 @@
 import 'package:flutter/material.dart';
-import 'package:lottie/lottie.dart';
 import '../constants/colors.dart';
 import '../screens/playlist_screen.dart';
 import '../screens/artist_screen.dart';
+import '../screens/now_playing_screen.dart';
+import '../screens/album_screen.dart';
 import '../widgets/main_screen_bottom_nav.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'dart:math';
 
-class LibraryScreen extends StatelessWidget {
+class LibraryScreen extends StatefulWidget {
   const LibraryScreen({super.key});
 
-  Widget _buildHeader() {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          const Text(
-            'Thư viện',
-            style: TextStyle(
-              color: Colors.white,
-              fontSize: 24,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          IconButton(
-            icon: const Icon(Icons.add, color: Colors.white),
-            onPressed: () {
-              // Tạo playlist mới
-            },
-          ),
-        ],
-      ),
-    );
+  @override
+  State<LibraryScreen> createState() => _LibraryScreenState();
+}
+
+class _LibraryScreenState extends State<LibraryScreen> with SingleTickerProviderStateMixin {
+  late TabController _tabController;
+  final List<String> _tabs = ['Playlist', 'Bài hát', 'Album', 'Nghệ sĩ'];
+
+  @override
+  void initState() {
+    super.initState();
+    _tabController = TabController(length: _tabs.length, vsync: this);
   }
 
-  Widget _buildSection({
-    required BuildContext context,
-    required String title,
-    required IconData icon,
-    required VoidCallback onTap,
-  }) {
-    return ListTile(
-      leading: Icon(icon, color: Colors.white, size: 28),
-      title: Text(
-        title,
-        style: const TextStyle(
-          color: Colors.white,
-          fontSize: 16,
-          fontWeight: FontWeight.w500,
-        ),
-      ),
-      trailing: const Icon(Icons.arrow_forward_ios, color: Colors.grey, size: 20),
-      onTap: () {
-        if (title == 'Nghệ sĩ đang theo dõi') {
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (context) => const ArtistScreen(),
-            ),
-          );
-        }
-      },
-    );
-  }
-
-  Widget _buildPlaylistItem(BuildContext context) {
-    return ListTile(
-      leading: Container(
-        width: 60,
-        height: 60,
-        decoration: BoxDecoration(
-          color: AppColors.surface,
-          borderRadius: BorderRadius.circular(8),
-        ),
-        child: Lottie.asset(
-          'assets/animations/musicDisc.json',
-          fit: BoxFit.cover,
-        ),
-      ),
-      title: const Text(
-        'Tên playlist',
-        style: TextStyle(color: Colors.white),
-      ),
-      subtitle: const Text(
-        '10 bài hát',
-        style: TextStyle(color: Colors.grey),
-      ),
-      trailing: IconButton(
-        icon: const Icon(Icons.more_vert, color: Colors.grey),
-        onPressed: () {
-          // Hiển thị menu tùy chọn
-        },
-      ),
-      onTap: () {
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => const PlaylistScreen(),
-          ),
-        );
-      },
-    );
+  @override
+  void dispose() {
+    _tabController.dispose();
+    super.dispose();
   }
 
   @override
@@ -107,65 +36,424 @@ class LibraryScreen extends StatelessWidget {
     return Scaffold(
       backgroundColor: AppColors.background,
       body: SafeArea(
-        child: SingleChildScrollView(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              _buildHeader(),
-              const Divider(color: Colors.grey),
-              _buildSection(
-                context: context,
-                title: 'Bài hát đã thích',
-                icon: Icons.favorite,
-                onTap: () {
-                  // Mở danh sách bài hát đã thích
-                },
-              ),
-              _buildSection(
-                context: context,
-                title: 'Album đã lưu',
-                icon: Icons.album,
-                onTap: () {
-                  // Mở danh sách album đã lưu
-                },
-              ),
-              _buildSection(
-                context: context,
-                title: 'Nghệ sĩ đang theo dõi',
-                icon: Icons.person,
-                onTap: () {
-                  // Mở danh sách nghệ sĩ đang theo dõi
-                },
-              ),
-              const Padding(
-                padding: EdgeInsets.all(16),
-                child: Text(
-                  'Playlist của bạn',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
+        child: NestedScrollView(
+          headerSliverBuilder: (context, innerBoxIsScrolled) {
+            return [
+              SliverAppBar(
+                expandedHeight: 150,
+                floating: false,
+                pinned: true,
+                backgroundColor: AppColors.background,
+                flexibleSpace: FlexibleSpaceBar(
+                  title: Text(
+                    'Thư viện',
+                    style: GoogleFonts.montserrat(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  background: Container(
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                        colors: [
+                          Colors.purple.withOpacity(0.6),
+                          AppColors.background.withOpacity(0.0),
+                        ],
+                      ),
+                    ),
                   ),
                 ),
               ),
-              ListView.builder(
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                itemCount: 5,
-                itemBuilder: (context, index) => _buildPlaylistItem(context),
+              SliverPersistentHeader(
+                delegate: _SliverAppBarDelegate(
+                  TabBar(
+                    controller: _tabController,
+                    isScrollable: true,
+                    indicatorColor: Colors.purple,
+                    indicatorWeight: 3,
+                    labelColor: Colors.white,
+                    unselectedLabelColor: Colors.grey,
+                    tabs: _tabs.map((tab) => Tab(text: tab)).toList(),
+                  ),
+                ),
+                pinned: true,
               ),
+            ];
+          },
+          body: TabBarView(
+            controller: _tabController,
+            children: [
+              _PlaylistTab(),
+              _SongsTab(),
+              _AlbumsTab(),
+              _ArtistsTab(),
             ],
           ),
         ),
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          // Tạo playlist mới
+      floatingActionButton: AnimatedBuilder(
+        animation: _tabController,
+        builder: (context, child) {
+          return AnimatedOpacity(
+            duration: const Duration(milliseconds: 200),
+            opacity: _tabController.index == 0 ? 1.0 : 0.0,
+            child: FloatingActionButton(
+              onPressed: _tabController.index == 0
+                  ? () {
+                      // Tạo playlist mới
+                    }
+                  : null,
+              backgroundColor: Colors.purple,
+              child: const Icon(Icons.add, color: Colors.white),
+            ),
+          );
         },
-        backgroundColor: AppColors.primary,
-        child: const Icon(Icons.add, color: Colors.white),
       ),
       bottomNavigationBar: const MainScreenBottomNav(selectedIndex: 2),
+    );
+  }
+}
+
+class _SliverAppBarDelegate extends SliverPersistentHeaderDelegate {
+  final TabBar _tabBar;
+
+  _SliverAppBarDelegate(this._tabBar);
+
+  @override
+  double get minExtent => _tabBar.preferredSize.height;
+  @override
+  double get maxExtent => _tabBar.preferredSize.height;
+
+  @override
+  Widget build(BuildContext context, double shrinkOffset, bool overlapsContent) {
+    return Container(
+      color: AppColors.background,
+      child: _tabBar,
+    );
+  }
+
+  @override
+  bool shouldRebuild(_SliverAppBarDelegate oldDelegate) {
+    return false;
+  }
+}
+
+class _PlaylistTab extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return ListView.builder(
+      padding: const EdgeInsets.all(16),
+      itemCount: 10,
+      itemBuilder: (context, index) {
+        return GestureDetector(
+          onTap: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => const PlaylistScreen(),
+              ),
+            );
+          },
+          child: Container(
+            margin: const EdgeInsets.only(bottom: 12),
+            decoration: BoxDecoration(
+              color: AppColors.surface,
+              borderRadius: BorderRadius.circular(12),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.1),
+                  blurRadius: 8,
+                  offset: const Offset(0, 2),
+                ),
+              ],
+            ),
+            child: ListTile(
+              contentPadding: const EdgeInsets.all(12),
+              leading: ClipRRect(
+                borderRadius: BorderRadius.circular(8),
+                child: Container(
+                  width: 60,
+                  height: 60,
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: [
+                        Colors.purple.withOpacity(0.7),
+                        Colors.blue.withOpacity(0.7),
+                      ],
+                    ),
+                  ),
+                  child: const Center(
+                    child: Icon(
+                      Icons.music_note,
+                      color: Colors.white,
+                      size: 30,
+                    ),
+                  ),
+                ),
+              ),
+              title: Text(
+                'Playlist ${index + 1}',
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              subtitle: Text(
+                '${Random().nextInt(20) + 1} bài hát',
+                style: TextStyle(color: Colors.grey[400]),
+              ),
+              trailing: IconButton(
+                icon: const Icon(Icons.more_vert, color: Colors.grey),
+                onPressed: () {},
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+}
+
+class _SongsTab extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return ListView.builder(
+      padding: const EdgeInsets.all(16),
+      itemCount: 20,
+      itemBuilder: (context, index) {
+        return GestureDetector(
+          onTap: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => const NowPlayingScreen(),
+              ),
+            );
+          },
+          child: Container(
+            margin: const EdgeInsets.only(bottom: 8),
+            decoration: BoxDecoration(
+              color: AppColors.surface.withOpacity(0.5),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: ListTile(
+              leading: ClipRRect(
+                borderRadius: BorderRadius.circular(4),
+                child: Container(
+                  width: 40,
+                  height: 40,
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: [
+                        Colors.purple.withOpacity(0.7),
+                        Colors.blue.withOpacity(0.7),
+                      ],
+                    ),
+                  ),
+                  child: const Center(
+                    child: Icon(
+                      Icons.music_note,
+                      color: Colors.white,
+                      size: 20,
+                    ),
+                  ),
+                ),
+              ),
+              title: const Text(
+                'Tên bài hát',
+                style: TextStyle(color: Colors.white),
+              ),
+              subtitle: Text(
+                'Nghệ sĩ',
+                style: TextStyle(color: Colors.grey[400]),
+              ),
+              trailing: IconButton(
+                icon: const Icon(Icons.more_vert, color: Colors.grey),
+                onPressed: () {},
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+}
+
+class _AlbumsTab extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return GridView.builder(
+      padding: const EdgeInsets.all(16),
+      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 2,
+        childAspectRatio: 0.8,
+        crossAxisSpacing: 12,
+        mainAxisSpacing: 12,
+      ),
+      itemCount: 10,
+      itemBuilder: (context, index) {
+        return GestureDetector(
+          onTap: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => const AlbumScreen(),
+              ),
+            );
+          },
+          child: Container(
+            decoration: BoxDecoration(
+              color: AppColors.surface,
+              borderRadius: BorderRadius.circular(12),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.1),
+                  blurRadius: 8,
+                  offset: const Offset(0, 2),
+                ),
+              ],
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(
+                  child: ClipRRect(
+                    borderRadius: const BorderRadius.vertical(
+                      top: Radius.circular(12),
+                    ),
+                    child: Container(
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                          colors: [
+                            Colors.purple.withOpacity(0.7),
+                            Colors.blue.withOpacity(0.7),
+                          ],
+                        ),
+                      ),
+                      child: const Center(
+                        child: Icon(
+                          Icons.music_note,
+                          color: Colors.white,
+                          size: 40,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.all(12),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Album ${index + 1}',
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        'Nghệ sĩ',
+                        style: TextStyle(color: Colors.grey[400]),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+}
+
+class _ArtistsTab extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return GridView.builder(
+      padding: const EdgeInsets.all(16),
+      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 2,
+        childAspectRatio: 1.0,
+        crossAxisSpacing: 12,
+        mainAxisSpacing: 12,
+      ),
+      itemCount: 10,
+      itemBuilder: (context, index) {
+        return GestureDetector(
+          onTap: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => const ArtistScreen(),
+              ),
+            );
+          },
+          child: Container(
+            decoration: BoxDecoration(
+              color: AppColors.surface,
+              borderRadius: BorderRadius.circular(12),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.1),
+                  blurRadius: 8,
+                  offset: const Offset(0, 2),
+                ),
+              ],
+            ),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Container(
+                  width: 80,
+                  height: 80,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    gradient: LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: [
+                        Colors.purple.withOpacity(0.7),
+                        Colors.blue.withOpacity(0.7),
+                      ],
+                    ),
+                  ),
+                  child: const Center(
+                    child: Icon(
+                      Icons.music_note,
+                      color: Colors.white,
+                      size: 40,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                Text(
+                  'Nghệ sĩ ${index + 1}',
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  '${Random().nextInt(100) + 1} bài hát',
+                  style: TextStyle(color: Colors.grey[400]),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
     );
   }
 }
