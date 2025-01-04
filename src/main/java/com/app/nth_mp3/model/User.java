@@ -9,6 +9,10 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonIdentityInfo;
+import com.fasterxml.jackson.annotation.JsonIdentityReference;
+import com.fasterxml.jackson.annotation.ObjectIdGenerators;
 
 @Getter
 @Setter
@@ -16,6 +20,9 @@ import lombok.Setter;
 @NoArgsConstructor
 @AllArgsConstructor
 @Table(name = "user")
+@JsonIdentityInfo(
+  generator = ObjectIdGenerators.PropertyGenerator.class, 
+  property = "id")
 public class User extends Base {
 
     private String username; // tên người dùng
@@ -32,7 +39,9 @@ public class User extends Base {
 
     private String location; // tỉnh thành phố
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "role_id")
+    @JsonIdentityReference(alwaysAsId = true)
+    @JsonIgnoreProperties("users")
     private Role role; // quyền người dùng
 }
