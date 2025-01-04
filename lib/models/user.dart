@@ -2,10 +2,10 @@ import 'base_model.dart';
 import 'role.dart';
 
 class User extends BaseModel {
-  String? username;
-  String? password;
+  late String username;
+  late String password;
   String? fullName;
-  String? email;
+  late String email;
   String? avatar;
   String? phone;
   String? location;
@@ -15,10 +15,10 @@ class User extends BaseModel {
     super.id,
     super.createdDate,
     super.updatedDate,
-    this.username,
-    this.password,
+    required this.username,
+    required this.password,
     this.fullName,
-    this.email,
+    required this.email,
     this.avatar,
     this.phone,
     this.location,

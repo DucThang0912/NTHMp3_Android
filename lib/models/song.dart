@@ -4,12 +4,12 @@ import 'base_model.dart';
 import 'genre.dart';
 
 class Song extends BaseModel {
-  String? title;
-  Artist? artist;
+  late String title;
+  late Artist artist;
   Album? album;
-  Genre? genre;
-  int? duration;
-  String? filePath;
+  late Genre genre;
+  late int duration;
+  late String filePath;
   String? lyrics;
   int? playCount;
 
@@ -17,21 +17,21 @@ class Song extends BaseModel {
     super.id,
     super.createdDate,
     super.updatedDate,
-    this.title,
-    this.artist,
+    required this.title,
+    required this.artist,
     this.album,
-    this.genre,
-    this.duration,
-    this.filePath,
+    required this.genre,
+    required this.duration,
+    required this.filePath,
     this.lyrics,
     this.playCount,
   });
 
   Song.fromJson(Map<String, dynamic> json) : super.fromJson(json) {
     title = json['title'];
-    artist = json['artist'] != null ? Artist.fromJson(json['artist']) : null;
+    artist = Artist.fromJson(json['artist']);
     album = json['album'] != null ? Album.fromJson(json['album']) : null;
-    genre = json['genre'] != null ? Genre.fromJson(json['genre']) : null;
+    genre = Genre.fromJson(json['genre']);
     duration = json['duration'];
     filePath = json['filePath'];
     lyrics = json['lyrics'];

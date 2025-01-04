@@ -30,7 +30,7 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-
+  http: ^1.1.0
 
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.
@@ -44,7 +44,8 @@ dependencies:
   cached_network_image: ^3.3.1
   shimmer: ^3.0.0
   provider: ^6.1.1
-  glassmorphism: ^3.0.0
+  glassmorphism: ^3.0.0 
+  shared_preferences: ^2.0.8  # lưu token vào local storage
   
 dev_dependencies:
   flutter_test:
@@ -100,5 +101,4 @@ flutter:
   # see https://flutter.dev/to/font-from-package
 
   assets:
-    - assets/images/
     - assets/animations/
