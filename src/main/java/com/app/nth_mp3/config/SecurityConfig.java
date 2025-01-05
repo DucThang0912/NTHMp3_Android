@@ -77,7 +77,13 @@ public class SecurityConfig {
                     "/api/playlists/delete/{id}",
                     "/api/playlists/toggle-visibility/{id}",
                     "/api/playlists/public",
-                    "/api/playlists/user/{userId}"
+                    "/api/playlists/user/{userId}",
+                    "/api/genres/list",
+                    "/api/genres/get-by/{id}",
+                    "/api/songs/list",
+                    "/api/songs/get-by/{id}",
+                     "/api/artists/list",
+                     "/api/artists/get-by/{id}"
                 ).permitAll()
                 
                 // URLs chỉ cho ADMIN
