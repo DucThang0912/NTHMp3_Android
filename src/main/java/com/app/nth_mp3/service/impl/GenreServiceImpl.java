@@ -52,4 +52,9 @@ public class GenreServiceImpl implements GenreService {
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy thể loại với id: " + id));
         genreRepository.delete(genre);
     }
+
+    @Override
+    public Optional<Genre> getGenreByName(String name) {
+        return genreRepository.findByName(name);
+    }
 } 

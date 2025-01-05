@@ -71,4 +71,9 @@ public class ArtistServiceImpl implements ArtistService {
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy nghệ sĩ với id: " + id));
         return artist.getAlbums();
     }
+
+    @Override
+    public Optional<Artist> getArtistByName(String name) {
+        return artistRepository.findByName(name);
+    }
 } 

@@ -82,8 +82,10 @@ public class SecurityConfig {
                     "/api/genres/get-by/{id}",
                     "/api/songs/list",
                     "/api/songs/get-by/{id}",
-                     "/api/artists/list",
-                     "/api/artists/get-by/{id}"
+                    "/api/artists/list",
+                    "/api/artists/get-by/{id}",
+                    "/api/albums/list",
+                    "/api/albums/get-by/{id}"
                 ).permitAll()
                 
                 // URLs chỉ cho ADMIN

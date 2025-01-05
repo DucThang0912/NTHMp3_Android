@@ -1,5 +1,6 @@
 package com.app.nth_mp3.controller;
 
+import com.app.nth_mp3.dto.AlbumDTO;
 import com.app.nth_mp3.model.Album;
 import com.app.nth_mp3.model.Song;
 import com.app.nth_mp3.service.AlbumService;
@@ -9,6 +10,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/albums")
@@ -17,12 +19,29 @@ public class AlbumController {
     @Autowired
     private AlbumService albumService;
 
+    private AlbumDTO convertToDTO(Album album) {
+        AlbumDTO dto = new AlbumDTO();
+        dto.setId(album.getId());
+        dto.setTitle(album.getTitle());
+        dto.setArtistName(album.getArtist().getName());
+        dto.setArtistId(album.getArtist().getId());
+        dto.setReleaseYear(album.getReleaseYear());
+        dto.setCoverImageUrl(album.getCoverImageUrl());
+        dto.setTotalSongs(album.getSongs().size());
+        dto.setCreatedDate(album.getCreatedDate());
+        dto.setUpdatedDate(album.getUpdatedDate());
+        return dto;
+    }
+
     // API lấy tất cả album
     @GetMapping("/list")
-    public ResponseEntity<List<Album>> getAllAlbums() {
+    public ResponseEntity<List<AlbumDTO>> getAllAlbums() {
         try {
             List<Album> albums = albumService.getAllAlbums();
-            return new ResponseEntity<>(albums, HttpStatus.OK);
+            List<AlbumDTO> albumDTOs = albums.stream()
+                .map(this::convertToDTO)
+                .collect(Collectors.toList());
+            return new ResponseEntity<>(albumDTOs, HttpStatus.OK);
         } catch (Exception e) {
             return new ResponseEntity<>(null, HttpStatus.INTERNAL_SERVER_ERROR);
         }

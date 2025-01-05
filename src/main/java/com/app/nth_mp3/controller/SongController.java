@@ -1,5 +1,6 @@
 package com.app.nth_mp3.controller;
 
+import com.app.nth_mp3.dto.SongDTO;
 import com.app.nth_mp3.model.Song;
 import com.app.nth_mp3.service.SongService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -8,6 +9,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/songs")
@@ -16,18 +18,43 @@ public class SongController {
     @Autowired
     private SongService songService;
 
+    private SongDTO convertToDTO(Song song) {
+        SongDTO dto = new SongDTO();
+        dto.setId(song.getId());
+        dto.setTitle(song.getTitle());
+        dto.setArtistName(song.getArtist().getName());
+        dto.setArtistId(song.getArtist().getId());
+        if (song.getAlbum() != null) {
+            dto.setAlbumTitle(song.getAlbum().getTitle());
+            dto.setAlbumId(song.getAlbum().getId());
+        }
+        dto.setGenreName(song.getGenre().getName());
+        dto.setGenreId(song.getGenre().getId());
+        dto.setDuration(song.getDuration());
+        dto.setFilePath(song.getFilePath());
+        dto.setLyrics(song.getLyrics());
+        dto.setPlayCount(song.getPlayCount());
+        dto.setCreatedDate(song.getCreatedDate());
+        dto.setUpdatedDate(song.getUpdatedDate());
+        return dto;
+    }
+
     // API lấy tất cả bài hát
     @GetMapping("/list")
-    public ResponseEntity<List<Song>> getAllSongs() {
-        return ResponseEntity.ok(songService.getAllSongs());
+    public ResponseEntity<List<SongDTO>> getAllSongs() {
+        List<Song> songs = songService.getAllSongs();
+        List<SongDTO> songDTOs = songs.stream()
+            .map(this::convertToDTO)
+            .collect(Collectors.toList());
+        return ResponseEntity.ok(songDTOs);
     }
 
     // API lấy bài hát theo id
     @GetMapping("/get-by/{id}")
-    public ResponseEntity<Song> getSongById(@PathVariable Long id) {
+    public ResponseEntity<SongDTO> getSongById(@PathVariable Long id) {
         return songService.getSongById(id)
-                .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
+            .map(song -> ResponseEntity.ok(convertToDTO(song)))
+            .orElse(ResponseEntity.notFound().build());
     }
 
     // API tạo bài hát mới

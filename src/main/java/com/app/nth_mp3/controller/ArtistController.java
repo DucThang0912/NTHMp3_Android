@@ -1,5 +1,6 @@
 package com.app.nth_mp3.controller;
 
+import com.app.nth_mp3.dto.ArtistDTO;
 import com.app.nth_mp3.model.Album;
 import com.app.nth_mp3.model.Artist;
 import com.app.nth_mp3.model.Song;
@@ -10,20 +11,37 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 @RestController
-    @RequestMapping("/api/artists")
+@RequestMapping("/api/artists")
 public class ArtistController {
 
     @Autowired
     private ArtistService artistService;
 
+    private ArtistDTO convertToDTO(Artist artist) {
+        ArtistDTO dto = new ArtistDTO();
+        dto.setId(artist.getId());
+        dto.setName(artist.getName());
+        dto.setBio(artist.getBio());
+        dto.setAvatarUrl(artist.getAvatarUrl());
+        dto.setTotalSongs(artist.getSongs().size());
+        dto.setTotalAlbums(artist.getAlbums().size());
+        dto.setCreatedDate(artist.getCreatedDate());
+        dto.setUpdatedDate(artist.getUpdatedDate());
+        return dto;
+    }
+
     // API lấy tất cả nghệ sĩ
     @GetMapping("/list")
-    public ResponseEntity<List<Artist>> getAllArtists() {
+    public ResponseEntity<List<ArtistDTO>> getAllArtists() {
         try {
             List<Artist> artists = artistService.getAllArtists();
-            return new ResponseEntity<>(artists, HttpStatus.OK);
+            List<ArtistDTO> artistDTOs = artists.stream()
+                .map(this::convertToDTO)
+                .collect(Collectors.toList());
+            return new ResponseEntity<>(artistDTOs, HttpStatus.OK);
         } catch (Exception e) {
             return new ResponseEntity<>(null, HttpStatus.INTERNAL_SERVER_ERROR);
         }

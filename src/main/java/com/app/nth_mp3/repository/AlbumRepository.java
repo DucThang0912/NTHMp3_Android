@@ -11,4 +11,5 @@ import com.app.nth_mp3.model.Album;
 public interface AlbumRepository extends JpaRepository<Album, Long> {
     List<Album> findByArtistId(Long artistId);
     List<Album> findByReleaseYear(Integer year);
+    List<Album> findByTitleAndArtistId(String title, Long artistId);
 }

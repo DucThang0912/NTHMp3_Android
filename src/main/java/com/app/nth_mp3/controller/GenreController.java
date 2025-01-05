@@ -1,7 +1,7 @@
 package com.app.nth_mp3.controller;
 
+import com.app.nth_mp3.dto.GenreDTO;
 import com.app.nth_mp3.model.Genre;
-import com.app.nth_mp3.model.Song;
 import com.app.nth_mp3.service.GenreService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -9,6 +9,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/genres")
@@ -17,24 +18,34 @@ public class GenreController {
     @Autowired
     private GenreService genreService;
 
-    // API lấy tất cả thể loại
+    private GenreDTO convertToDTO(Genre genre) {
+        GenreDTO dto = new GenreDTO();
+        dto.setId(genre.getId());
+        dto.setName(genre.getName());
+        dto.setCreatedDate(genre.getCreatedDate());
+        dto.setUpdatedDate(genre.getUpdatedDate());
+        return dto;
+    }
+
     @GetMapping("/list")
-    public ResponseEntity<List<Genre>> getAllGenres() {
+    public ResponseEntity<List<GenreDTO>> getAllGenres() {
         try {
             List<Genre> genres = genreService.getAllGenres();
-            return new ResponseEntity<>(genres, HttpStatus.OK);
+            List<GenreDTO> genreDTOs = genres.stream()
+                .map(this::convertToDTO)
+                .collect(Collectors.toList());
+            return new ResponseEntity<>(genreDTOs, HttpStatus.OK);
         } catch (Exception e) {
             return new ResponseEntity<>(null, HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 
-    // API lấy thể loại theo id
     @GetMapping("/get-by/{id}")
-    public ResponseEntity<Genre> getGenreById(@PathVariable Long id) {
+    public ResponseEntity<GenreDTO> getGenreById(@PathVariable Long id) {
         try {
             return genreService.getGenreById(id)
-                    .map(genre -> new ResponseEntity<>(genre, HttpStatus.OK))
-                    .orElse(new ResponseEntity<>(HttpStatus.NOT_FOUND));
+                .map(genre -> new ResponseEntity<>(convertToDTO(genre), HttpStatus.OK))
+                .orElse(new ResponseEntity<>(HttpStatus.NOT_FOUND));
         } catch (Exception e) {
             return new ResponseEntity<>(null, HttpStatus.INTERNAL_SERVER_ERROR);
         }
