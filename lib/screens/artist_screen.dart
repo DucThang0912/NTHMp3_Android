@@ -5,7 +5,8 @@ import 'now_playing_screen.dart';
 import 'album_screen.dart';
 
 class ArtistScreen extends StatefulWidget {
-  const ArtistScreen({super.key});
+  final int artistId;
+  const ArtistScreen({super.key, required this.artistId});
 
   @override
   State<ArtistScreen> createState() => _ArtistScreenState();
@@ -226,14 +227,14 @@ class _ArtistScreenState extends State<ArtistScreen> {
                                   ),
                                 ],
                               ),
-                              onTap: () {
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (context) => const NowPlayingScreen(),
-                                  ),
-                                );
-                              },
+                              // onTap: () {
+                              //   Navigator.push(
+                              //     context,
+                              //     MaterialPageRoute(
+                              //       builder: (context) => const NowPlayingScreen(),
+                              //     ),
+                              //   );
+                              // },
                             ),
                           );
                         },

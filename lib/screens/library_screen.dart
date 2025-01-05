@@ -17,12 +17,11 @@ class LibraryScreen extends StatefulWidget {
 
 class _LibraryScreenState extends State<LibraryScreen> with SingleTickerProviderStateMixin {
   late TabController _tabController;
-  final List<String> _tabs = ['Playlist', 'Bài hát', 'Album', 'Nghệ sĩ'];
 
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: _tabs.length, vsync: this);
+    _tabController = TabController(length: 4, vsync: this);
   }
 
   @override
@@ -35,83 +34,33 @@ class _LibraryScreenState extends State<LibraryScreen> with SingleTickerProvider
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.background,
-      body: SafeArea(
-        child: NestedScrollView(
-          headerSliverBuilder: (context, innerBoxIsScrolled) {
-            return [
-              SliverAppBar(
-                expandedHeight: 150,
-                floating: false,
-                pinned: true,
-                backgroundColor: AppColors.background,
-                flexibleSpace: FlexibleSpaceBar(
-                  title: Text(
-                    'Thư viện',
-                    style: GoogleFonts.montserrat(
-                      color: Colors.white,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  background: Container(
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        begin: Alignment.topCenter,
-                        end: Alignment.bottomCenter,
-                        colors: [
-                          Colors.purple.withOpacity(0.6),
-                          AppColors.background.withOpacity(0.0),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-              SliverPersistentHeader(
-                delegate: _SliverAppBarDelegate(
-                  TabBar(
-                    controller: _tabController,
-                    isScrollable: true,
-                    indicatorColor: Colors.purple,
-                    indicatorWeight: 3,
-                    labelColor: Colors.white,
-                    unselectedLabelColor: Colors.grey,
-                    tabs: _tabs.map((tab) => Tab(text: tab)).toList(),
-                  ),
-                ),
-                pinned: true,
-              ),
-            ];
-          },
-          body: TabBarView(
-            controller: _tabController,
-            children: [
-              _PlaylistTab(),
-              _SongsTab(),
-              _AlbumsTab(),
-              _ArtistsTab(),
-            ],
-          ),
+      appBar: AppBar(
+        backgroundColor: AppColors.background,
+        title: const Text(
+          'Thư viện',
+          style: TextStyle(color: Colors.white),
+        ),
+        bottom: TabBar(
+          controller: _tabController,
+          isScrollable: true,
+          tabs: const [
+            Tab(text: 'Playlist'),
+            Tab(text: 'Bài hát'),
+            Tab(text: 'Album'),
+            Tab(text: 'Nghệ sĩ'),
+          ],
         ),
       ),
-      floatingActionButton: AnimatedBuilder(
-        animation: _tabController,
-        builder: (context, child) {
-          return AnimatedOpacity(
-            duration: const Duration(milliseconds: 200),
-            opacity: _tabController.index == 0 ? 1.0 : 0.0,
-            child: FloatingActionButton(
-              onPressed: _tabController.index == 0
-                  ? () {
-                      // Tạo playlist mới
-                    }
-                  : null,
-              backgroundColor: Colors.purple,
-              child: const Icon(Icons.add, color: Colors.white),
-            ),
-          );
-        },
+      body: TabBarView(
+        controller: _tabController,
+        children: [
+          _PlaylistTab(),
+          _SongsTab(),
+          _AlbumsTab(),
+          _ArtistsTab(),
+        ],
       ),
-      bottomNavigationBar: const MainScreenBottomNav(selectedIndex: 2),
+      bottomNavigationBar: const MainScreenBottomNav(selectedIndex: 3),
     );
   }
 }
@@ -226,14 +175,14 @@ class _SongsTab extends StatelessWidget {
       itemCount: 20,
       itemBuilder: (context, index) {
         return GestureDetector(
-          onTap: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (context) => const NowPlayingScreen(),
-              ),
-            );
-          },
+          // onTap: () {
+          //   Navigator.push(
+          //     context,
+          //     MaterialPageRoute(
+          //       builder: (context) => const NowPlayingScreen(),
+          //     ),
+          //   );
+          // },
           child: Container(
             margin: const EdgeInsets.only(bottom: 8),
             decoration: BoxDecoration(
@@ -391,14 +340,14 @@ class _ArtistsTab extends StatelessWidget {
       itemCount: 10,
       itemBuilder: (context, index) {
         return GestureDetector(
-          onTap: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (context) => const ArtistScreen(),
-              ),
-            );
-          },
+          // onTap: () {
+          //   Navigator.push(
+          //     context,
+          //     MaterialPageRoute(
+          //       builder: (context) => const ArtistScreen(),
+          //     ),
+          //   );
+          // },
           child: Container(
             decoration: BoxDecoration(
               color: AppColors.surface,

@@ -2,9 +2,15 @@ import 'package:flutter/material.dart';
 import 'package:lottie/lottie.dart';
 import '../constants/colors.dart';
 import 'package:google_fonts/google_fonts.dart';
+import '../models/song.dart';
 
 class NowPlayingScreen extends StatefulWidget {
-  const NowPlayingScreen({super.key});
+  final Song song;
+  
+  const NowPlayingScreen({
+    super.key,
+    required this.song,
+  });
 
   @override
   State<NowPlayingScreen> createState() => _NowPlayingScreenState();

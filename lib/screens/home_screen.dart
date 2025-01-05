@@ -7,6 +7,12 @@ import '../screens/artist_screen.dart';
 import '../widgets/main_screen_bottom_nav.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../screens/search_screen.dart';
+import '../services/genre_service.dart';
+import '../models/genre.dart';
+import '../services/song_service.dart';
+import '../models/song.dart';
+import '../services/artist_service.dart';
+import '../models/artist.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -20,13 +26,13 @@ class HomeScreen extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const _AppBar(),
-              const _FeaturedBanner(),
-              const _RecentlyPlayed(),
-              const _TopTrending(),
-              const _Genres(),
-              const _NewReleases(),
-              const _TopArtists(),
+              _AppBar(),
+              _FeaturedBanner(),
+              _RecentlyPlayed(),
+              _TopTrending(),
+              _Genres(),
+              _NewReleases(),
+              _TopArtists(),
               const SizedBox(height: 20),
             ],
           ),
@@ -52,7 +58,7 @@ class _AppBar extends StatelessWidget {
             children: [
               Text(
                 'Xin chào!',
-                style: GoogleFonts.montserrat(
+                style: TextStyle(
                   color: Colors.white,
                   fontSize: 24,
                   fontWeight: FontWeight.bold,
@@ -60,7 +66,7 @@ class _AppBar extends StatelessWidget {
               ),
               Text(
                 'Khám phá âm nhạc của bạn',
-                style: GoogleFonts.montserrat(
+                style: TextStyle(
                   color: Colors.grey[400],
                   fontSize: 14,
                 ),
@@ -248,18 +254,41 @@ class WavePainter extends CustomPainter {
   bool shouldRepaint(WavePainter oldDelegate) => true;
 }
 
-class _Genres extends StatelessWidget {
+class _Genres extends StatefulWidget {
   const _Genres();
 
   @override
-  Widget build(BuildContext context) {
-    final List<Map<String, dynamic>> genres = [
-      {'name': 'Pop', 'color': Colors.pink},
-      {'name': 'Rock', 'color': Colors.blue},
-      {'name': 'Jazz', 'color': Colors.orange},
-      {'name': 'Classical', 'color': Colors.purple},
-    ];
+  State<_Genres> createState() => _GenresState();
+}
 
+class _GenresState extends State<_Genres> {
+  final GenreService _genreService = GenreService();
+  List<Genre> genres = [];
+  bool isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadGenres();
+  }
+
+  Future<void> _loadGenres() async {
+    try {
+      final loadedGenres = await _genreService.getAllGenres();
+      setState(() {
+        genres = loadedGenres;
+        isLoading = false;
+      });
+    } catch (e) {
+      print('Error loading genres: $e');
+      setState(() {
+        isLoading = false;
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -267,47 +296,93 @@ class _Genres extends StatelessWidget {
           padding: const EdgeInsets.all(16.0),
           child: Text(
             'Thể loại',
-            style: GoogleFonts.montserrat(
+            style: TextStyle(
               color: Colors.white,
               fontSize: 20,
               fontWeight: FontWeight.bold,
             ),
           ),
         ),
-        SizedBox(
-          height: 100,
-          child: ListView.builder(
-            scrollDirection: Axis.horizontal,
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            itemCount: genres.length,
-            itemBuilder: (context, index) {
-              return Container(
-                width: 100,
-                margin: const EdgeInsets.only(right: 12),
-                decoration: BoxDecoration(
-                  color: genres[index]['color'],
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Center(
-                  child: Text(
-                    genres[index]['name'],
-                    style: GoogleFonts.montserrat(
-                      color: Colors.white,
-                      fontWeight: FontWeight.bold,
+        if (isLoading)
+          const Center(child: CircularProgressIndicator())
+        else
+          SizedBox(
+            height: 100,
+            child: ListView.builder(
+              scrollDirection: Axis.horizontal,
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              itemCount: genres.length,
+              itemBuilder: (context, index) {
+                final genre = genres[index];
+                // Tạo màu ngẫu nhiên cho mỗi thể loại
+                final color = Colors.primaries[index % Colors.primaries.length];
+                
+                return Container(
+                  width: 100,
+                  margin: const EdgeInsets.only(right: 12),
+                  decoration: BoxDecoration(
+                    color: color,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Center(
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 8),
+                      child: Text(
+                        genre.name ?? '',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 14,
+                          fontWeight: FontWeight.bold,
+                        ),
+                        textAlign: TextAlign.center,
+                        overflow: TextOverflow.ellipsis,
+                        maxLines: 2,
+                      ),
                     ),
                   ),
-                ),
-              );
-            },
+                );
+              },
+            ),
           ),
-        ),
       ],
     );
   }
 }
 
-class _RecentlyPlayed extends StatelessWidget {
+class _RecentlyPlayed extends StatefulWidget {
   const _RecentlyPlayed();
+
+  @override
+  State<_RecentlyPlayed> createState() => _RecentlyPlayedState();
+}
+
+class _RecentlyPlayedState extends State<_RecentlyPlayed> {
+  final SongService _songService = SongService();
+  List<Song> recentSongs = [];
+  bool isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadRecentSongs();
+  }
+
+  Future<void> _loadRecentSongs() async {
+    try {
+      final songs = await _songService.getAllSongs();
+      // Sắp xếp theo createdDate mới nhất và lấy 10 bài
+      songs.sort((a, b) => b.createdDate!.compareTo(a.createdDate!));
+      setState(() {
+        recentSongs = songs.take(10).toList();
+        isLoading = false;
+      });
+    } catch (e) {
+      print('Error loading recent songs: $e');
+      setState(() {
+        isLoading = false;
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -325,24 +400,31 @@ class _RecentlyPlayed extends StatelessWidget {
             ),
           ),
         ),
-        SizedBox(
-          height: 200,
-          child: ListView.builder(
-            scrollDirection: Axis.horizontal,
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            itemCount: 5,
-            itemBuilder: (context, index) {
-              return const _RecentlyPlayedItem();
-            },
+        if (isLoading)
+          const Center(child: CircularProgressIndicator())
+        else
+          SizedBox(
+            height: 220,
+            child: ListView.builder(
+              shrinkWrap: true,
+              scrollDirection: Axis.horizontal,
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              itemCount: recentSongs.length,
+              itemBuilder: (context, index) {
+                final song = recentSongs[index];
+                return _RecentlyPlayedItem(song: song);
+              },
+            ),
           ),
-        ),
       ],
     );
   }
 }
 
 class _RecentlyPlayedItem extends StatelessWidget {
-  const _RecentlyPlayedItem();
+  final Song song;
+  
+  const _RecentlyPlayedItem({required this.song});
 
   @override
   Widget build(BuildContext context) {
@@ -351,7 +433,7 @@ class _RecentlyPlayedItem extends StatelessWidget {
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (context) => const NowPlayingScreen(),
+            builder: (context) => NowPlayingScreen(song: song),
           ),
         );
       },
@@ -389,16 +471,29 @@ class _RecentlyPlayedItem extends StatelessWidget {
                 ),
               ),
             ),
-            const Padding(
-              padding: EdgeInsets.all(8.0),
-              child: Text(
-                'Song Name',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.w500,
-                ),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
+            Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    song.title,
+                    style: const TextStyle(
+                      color: Colors.white,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    song.artistName,
+                    style: const TextStyle(
+                      color: Colors.grey,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ],
               ),
             ),
           ],
@@ -408,8 +503,41 @@ class _RecentlyPlayedItem extends StatelessWidget {
   }
 }
 
-class _TopTrending extends StatelessWidget {
+class _TopTrending extends StatefulWidget {
   const _TopTrending();
+
+  @override
+  State<_TopTrending> createState() => _TopTrendingState();
+}
+
+class _TopTrendingState extends State<_TopTrending> {
+  final SongService _songService = SongService();
+  List<Song> trendingSongs = [];
+  bool isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadTrendingSongs();
+  }
+
+  Future<void> _loadTrendingSongs() async {
+    try {
+      final songs = await _songService.getAllSongs();
+      // Sắp xếp theo playCount giảm dần
+      songs.sort((a, b) => (b.playCount ?? 0).compareTo(a.playCount ?? 0));
+      setState(() {
+        // Lấy 10 bài hát đầu tiên
+        trendingSongs = songs.take(10).toList();
+        isLoading = false;
+      });
+    } catch (e) {
+      print('Error loading trending songs: $e');
+      setState(() {
+        isLoading = false;
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -427,24 +555,28 @@ class _TopTrending extends StatelessWidget {
             ),
           ),
         ),
-        SizedBox(
-          height: 220,
-          child: ListView.builder(
-            scrollDirection: Axis.horizontal,
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            itemCount: 5,
-            itemBuilder: (context, index) {
-              return const _TopTrendingItem();
-            },
+        if (isLoading)
+          const Center(child: CircularProgressIndicator())
+        else
+          SizedBox(
+            height: 220,
+            child: ListView.builder(
+              scrollDirection: Axis.horizontal,
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              itemCount: trendingSongs.length,
+              itemBuilder: (context, index) {
+                return _TopTrendingItem(song: trendingSongs[index]);
+              },
+            ),
           ),
-        ),
       ],
     );
   }
 }
 
 class _TopTrendingItem extends StatelessWidget {
-  const _TopTrendingItem();
+  final Song song;
+  const _TopTrendingItem({required this.song});
 
   @override
   Widget build(BuildContext context) {
@@ -453,7 +585,7 @@ class _TopTrendingItem extends StatelessWidget {
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (context) => const NowPlayingScreen(),
+            builder: (context) => NowPlayingScreen(song: song),
           ),
         );
       },
@@ -491,26 +623,24 @@ class _TopTrendingItem extends StatelessWidget {
                 ),
               ),
             ),
-            const Padding(
-              padding: EdgeInsets.all(8.0),
+            Padding(
+              padding: const EdgeInsets.all(8.0),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Song Name',
-                    style: TextStyle(
+                    song.title,
+                    style: const TextStyle(
                       color: Colors.white,
-                      fontWeight: FontWeight.w500,
                     ),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
-                  SizedBox(height: 4),
+                  const SizedBox(height: 4),
                   Text(
-                    'Artist Name',
-                    style: TextStyle(
+                    song.artistName,
+                    style: const TextStyle(
                       color: Colors.grey,
-                      fontSize: 12,
                     ),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
@@ -533,12 +663,17 @@ class _NewReleases extends StatefulWidget {
 }
 
 class _NewReleasesState extends State<_NewReleases> with SingleTickerProviderStateMixin {
+  final SongService _songService = SongService();
+  List<Song> newSongs = [];
+  List<Song> trendingSongs = [];
+  List<Song> vPopSongs = [];
+  List<Song> kPopSongs = [];
+  bool isLoading = true;
   late TabController _tabController;
-  
+
   final List<String> _tabs = [
     'Mới phát hành',
     'Bảng xếp hạng',
-    'Top 100',
     'V-Pop',
     'K-Pop',
   ];
@@ -547,6 +682,37 @@ class _NewReleasesState extends State<_NewReleases> with SingleTickerProviderSta
   void initState() {
     super.initState();
     _tabController = TabController(length: _tabs.length, vsync: this);
+    _loadAllSongs();
+  }
+
+  Future<void> _loadAllSongs() async {
+    try {
+      final songs = await _songService.getAllSongs();
+      setState(() {
+        // Lấy danh sách trending songs (sắp xếp theo playCount)
+        trendingSongs = List.from(songs)
+          ..sort((a, b) => (b.playCount ?? 0).compareTo(a.playCount ?? 0))
+          ..take(10);
+
+        // Lọc bài hát V-Pop
+        vPopSongs = songs.where((song) => song.genreName == "V-Pop").toList();
+
+        // Lọc bài hát K-Pop
+        kPopSongs = songs.where((song) => song.genreName == "K-Pop").toList();
+
+        // Sắp xếp bài hát mới theo ngày tạo
+        newSongs = List.from(songs)
+          ..sort((a, b) => b.createdDate!.compareTo(a.createdDate!))
+          ..take(10);
+
+        isLoading = false;
+      });
+    } catch (e) {
+      print('Error loading songs: $e');
+      setState(() {
+        isLoading = false;
+      });
+    }
   }
 
   @override
@@ -577,7 +743,6 @@ class _NewReleasesState extends State<_NewReleases> with SingleTickerProviderSta
             children: [
               _buildNewReleasesList(),
               _buildRankingList(),
-              _buildTop100List(),
               _buildVPopList(),
               _buildKPopList(),
             ],
@@ -588,57 +753,260 @@ class _NewReleasesState extends State<_NewReleases> with SingleTickerProviderSta
   }
 
   Widget _buildNewReleasesList() {
+    if (isLoading) {
+      return const Center(child: CircularProgressIndicator());
+    }
+    
     return ListView.builder(
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      padding: const EdgeInsets.symmetric(horizontal: 16),
-      itemCount: 5,
-      itemBuilder: (context, index) => const _NewReleasesItem(),
-    );
-  }
-
-  Widget _buildRankingList() {
-    return ListView.builder(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
-      itemCount: 20,
+      padding: const EdgeInsets.all(16),
+      itemCount: newSongs.length,
       itemBuilder: (context, index) {
-        return ListTile(
-          leading: Text(
-            '#${index + 1}',
-            style: const TextStyle(
-              color: Colors.purple,
-              fontSize: 20,
-              fontWeight: FontWeight.bold,
+        final song = newSongs[index];
+        return Container(
+          margin: const EdgeInsets.only(bottom: 8),
+          decoration: BoxDecoration(
+            color: AppColors.surface.withOpacity(0.5),
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: ListTile(
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => NowPlayingScreen(song: song),
+                ),
+              );
+            },
+            leading: ClipRRect(
+              borderRadius: BorderRadius.circular(4),
+              child: Container(
+                width: 48,
+                height: 48,
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [
+                      Colors.purple.withOpacity(0.7),
+                      Colors.blue.withOpacity(0.7),
+                    ],
+                  ),
+                ),
+                child: const Center(
+                  child: Icon(
+                    Icons.music_note,
+                    color: Colors.white,
+                    size: 24,
+                  ),
+                ),
+              ),
+            ),
+            title: Text(
+              song.title,
+              style: const TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.w500,
+              ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+            subtitle: Text(
+              song.artistName,
+              style: TextStyle(
+                color: Colors.grey[400],
+              ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+            trailing: Text(
+              _formatDate(song.createdDate!),
+              style: TextStyle(
+                color: Colors.grey[400],
+                fontSize: 12,
+              ),
             ),
           ),
-          title: const _NewReleasesItem(),
         );
       },
     );
   }
 
-  Widget _buildTop100List() {
-    return GridView.builder(
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      padding: const EdgeInsets.symmetric(horizontal: 16),
-      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 2,
-        childAspectRatio: 1.5,
-        crossAxisSpacing: 10,
-        mainAxisSpacing: 10,
-      ),
-      itemCount: 4,
-      itemBuilder: (context, index) => const _TopGridItem(),
+  String _formatDate(DateTime date) {
+    final now = DateTime.now();
+    final difference = now.difference(date);
+
+    if (difference.inDays == 0) {
+      return 'Hôm nay';
+    } else if (difference.inDays == 1) {
+      return 'Hôm qua';
+    } else if (difference.inDays < 7) {
+      return '${difference.inDays} ngày trước';
+    } else {
+      return '${date.day}/${date.month}/${date.year}';
+    }
+  }
+
+  Widget _buildRankingList() {
+    if (isLoading) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
+    return ListView.builder(
+      padding: const EdgeInsets.all(16),
+      itemCount: trendingSongs.length,
+      itemBuilder: (context, index) {
+        final song = trendingSongs[index];
+        return Container(
+          margin: const EdgeInsets.only(bottom: 8),
+          decoration: BoxDecoration(
+            color: AppColors.surface.withOpacity(0.5),
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: ListTile(
+            leading: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  width: 35,
+                  alignment: Alignment.center,
+                  child: Text(
+                    '#${index + 1}',
+                    style: TextStyle(
+                      color: index < 3 ? Colors.purple : Colors.grey[400],
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(4),
+                  child: Container(
+                    width: 48,
+                    height: 48,
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                        colors: [
+                          Colors.purple.withOpacity(0.7),
+                          Colors.blue.withOpacity(0.7),
+                        ],
+                      ),
+                    ),
+                    child: const Icon(Icons.music_note, color: Colors.white),
+                  ),
+                ),
+              ],
+            ),
+            title: Text(
+              song.title,
+              style: const TextStyle(color: Colors.white),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+            subtitle: Text(
+              song.artistName,
+              style: TextStyle(color: Colors.grey[400]),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+            trailing: Text(
+              '${song.playCount ?? 0} plays',
+              style: TextStyle(color: Colors.grey[400], fontSize: 12),
+            ),
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => NowPlayingScreen(song: song),
+                ),
+              );
+            },
+          ),
+        );
+      },
     );
   }
 
   Widget _buildVPopList() {
-    return _buildNewReleasesList();
+    if (isLoading) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
+    return ListView.builder(
+      padding: const EdgeInsets.all(16),
+      itemCount: vPopSongs.length,
+      itemBuilder: (context, index) {
+        final song = vPopSongs[index];
+        return _buildSongListItem(song);
+      },
+    );
   }
 
   Widget _buildKPopList() {
-    return _buildNewReleasesList();
+    if (isLoading) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
+    return ListView.builder(
+      padding: const EdgeInsets.all(16),
+      itemCount: kPopSongs.length,
+      itemBuilder: (context, index) {
+        final song = kPopSongs[index];
+        return _buildSongListItem(song);
+      },
+    );
+  }
+
+  Widget _buildSongListItem(Song song) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 8),
+      decoration: BoxDecoration(
+        color: AppColors.surface.withOpacity(0.5),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: ListTile(
+        leading: ClipRRect(
+          borderRadius: BorderRadius.circular(4),
+          child: Container(
+            width: 48,
+            height: 48,
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  Colors.purple.withOpacity(0.7),
+                  Colors.blue.withOpacity(0.7),
+                ],
+              ),
+            ),
+            child: const Icon(Icons.music_note, color: Colors.white),
+          ),
+        ),
+        title: Text(
+          song.title,
+          style: const TextStyle(color: Colors.white),
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+        ),
+        subtitle: Text(
+          song.artistName,
+          style: TextStyle(color: Colors.grey[400]),
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+        ),
+        onTap: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => NowPlayingScreen(song: song),
+            ),
+          );
+        },
+      ),
+    );
   }
 }
 
@@ -663,18 +1031,6 @@ class _TopGridItem extends StatelessWidget {
               ),
             ),
           ),
-          const Padding(
-            padding: EdgeInsets.all(8.0),
-            child: Text(
-              'Top 100 Playlist',
-              style: TextStyle(
-                color: Colors.white,
-                fontWeight: FontWeight.w500,
-              ),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-            ),
-          ),
         ],
       ),
     );
@@ -682,84 +1038,98 @@ class _TopGridItem extends StatelessWidget {
 }
 
 class _NewReleasesItem extends StatelessWidget {
-  const _NewReleasesItem();
+  final Song? song;
+  const _NewReleasesItem({this.song});
 
   @override
   Widget build(BuildContext context) {
     return ListTile(
-      title: Row(
-        children: [
-          ClipRRect(
-            borderRadius: BorderRadius.circular(8),
-            child: Container(
-              height: 60,
-              width: 60,
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: [
-                    Colors.purple.withOpacity(0.7),
-                    Colors.blue.withOpacity(0.7),
-                  ],
-                ),
-              ),
-              child: const Center(
-                child: Icon(
-                  Icons.music_note,
-                  color: Colors.white,
-                  size: 30,
-                ),
-              ),
-            ),
-          ),
-          const SizedBox(width: 12),
-          const Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Song Name',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.w500,
-                  ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                SizedBox(height: 4),
-                Text(
-                  'Artist Name',
-                  style: TextStyle(
-                    color: Colors.grey,
-                    fontSize: 12,
-                  ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
+      leading: ClipRRect(
+        borderRadius: BorderRadius.circular(8),
+        child: Container(
+          height: 60,
+          width: 60,
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [
+                Colors.purple.withOpacity(0.7),
+                Colors.blue.withOpacity(0.7),
               ],
             ),
           ),
-          IconButton(
-            icon: const Icon(Icons.more_vert, color: Colors.white),
-            onPressed: () {},
+          child: const Center(
+            child: Icon(
+              Icons.music_note,
+              color: Colors.white,
+              size: 30,
+            ),
           ),
-        ],
+        ),
       ),
-      onTap: () {
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => const NowPlayingScreen(),
-          ),
-        );
-      },
+      title: Text(
+        song?.title ?? 'Chưa có tên bài hát',
+        style: const TextStyle(color: Colors.white),
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+      ),
+      subtitle: Text(
+        song?.artistName ?? 'Chưa có tên nghệ sĩ',
+        style: const TextStyle(color: Colors.grey),
+      ),
+      onTap: song != null
+          ? () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => NowPlayingScreen(song: song!),
+                ),
+              );
+            }
+          : null,
     );
   }
 }
 
-class _TopArtists extends StatelessWidget {
+class _TopArtists extends StatefulWidget {
   const _TopArtists();
+
+  @override
+  State<_TopArtists> createState() => _TopArtistsState();
+}
+
+class _TopArtistsState extends State<_TopArtists> {
+  final ArtistService _artistService = ArtistService();
+  List<Artist> artists = [];
+  bool isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadTopArtists();
+  }
+
+  Future<void> _loadTopArtists() async {
+    try {
+      final loadedArtists = await _artistService.getAllArtists();
+      // Sắp xếp theo tổng số bài hát và album
+      loadedArtists.sort((a, b) {
+        final aTotal = (a.totalSongs ?? 0) + (a.totalAlbums ?? 0);
+        final bTotal = (b.totalSongs ?? 0) + (b.totalAlbums ?? 0);
+        return bTotal.compareTo(aTotal);
+      });
+      setState(() {
+        artists = loadedArtists.take(10).toList(); // Lấy 10 nghệ sĩ hàng đầu
+        isLoading = false;
+      });
+    } catch (e) {
+      print('Error loading top artists: $e');
+      setState(() {
+        isLoading = false;
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -777,25 +1147,28 @@ class _TopArtists extends StatelessWidget {
             ),
           ),
         ),
-        SizedBox(
-          height: 140,
-          child: ListView.builder(
-            scrollDirection: Axis.horizontal,
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            itemCount: 5,
-            itemBuilder: (context, index) {
-              return const _TopArtistsItem();
-            },
+        if (isLoading)
+          const Center(child: CircularProgressIndicator())
+        else
+          SizedBox(
+            height: 150,
+            child: ListView.builder(
+              scrollDirection: Axis.horizontal,
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              itemCount: artists.length,
+              itemBuilder: (context, index) {
+                return _ArtistItem(artist: artists[index]);
+              },
+            ),
           ),
-        ),
-        const SizedBox(height: 16),
       ],
     );
   }
 }
 
-class _TopArtistsItem extends StatelessWidget {
-  const _TopArtistsItem();
+class _ArtistItem extends StatelessWidget {
+  final Artist artist;
+  const _ArtistItem({required this.artist});
 
   @override
   Widget build(BuildContext context) {
@@ -804,19 +1177,19 @@ class _TopArtistsItem extends StatelessWidget {
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (context) => const ArtistScreen(),
+            builder: (context) => ArtistScreen(artistId: artist.id!),
           ),
         );
       },
       child: Container(
-        width: 100,
+        width: 120,
         margin: const EdgeInsets.only(right: 16),
         child: Column(
           children: [
             ClipOval(
               child: Container(
-                height: 80,
-                width: 80,
+                width: 100,
+                height: 100,
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
                     begin: Alignment.topLeft,
@@ -829,7 +1202,7 @@ class _TopArtistsItem extends StatelessWidget {
                 ),
                 child: const Center(
                   child: Icon(
-                    Icons.music_note,
+                    Icons.person,
                     color: Colors.white,
                     size: 40,
                   ),
@@ -837,16 +1210,15 @@ class _TopArtistsItem extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 8),
-            const Text(
-              'Artist Name',
-              style: TextStyle(
+            Text(
+              artist.name ?? '',
+              style: const TextStyle(
                 color: Colors.white,
                 fontSize: 14,
-                fontWeight: FontWeight.w500,
               ),
-              maxLines: 2,
-              textAlign: TextAlign.center,
+              maxLines: 1,
               overflow: TextOverflow.ellipsis,
+              textAlign: TextAlign.center,
             ),
           ],
         ),

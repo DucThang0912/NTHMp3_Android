@@ -207,14 +207,14 @@ class _PlaylistScreenState extends State<PlaylistScreen> {
               ),
             ],
           ),
-          onTap: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (context) => const NowPlayingScreen(),
-              ),
-            );
-          },
+          // onTap: () {
+          //   Navigator.push(
+          //     context,
+          //     MaterialPageRoute(
+          //       builder: (context) => const NowPlayingScreen(),
+          //     ),
+          //   );
+          // },
         ),
       ),
     );

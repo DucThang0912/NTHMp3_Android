@@ -143,6 +143,16 @@ class _LoginScreenState extends State<LoginScreen>
   void _handleLogin() async {
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
 
+    if (_usernameController.text.isEmpty || _passwordController.text.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Vui lòng nhập đầy đủ tài khoản và mật khẩu'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
     try {
       final success = await authProvider.login(
         _usernameController.text,
@@ -159,6 +169,13 @@ class _LoginScreenState extends State<LoginScreen>
           const SnackBar(
             content: Text('Đăng nhập thành công!'),
             backgroundColor: Colors.green,
+          ),
+        );
+      } else if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Tài khoản hoặc mật khẩu không chính xác'),
+            backgroundColor: Colors.red,
           ),
         );
       }

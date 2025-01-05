@@ -8,6 +8,8 @@ class Artist extends BaseModel {
   String? avatarUrl;
   List<Album>? albums;
   List<Song>? songs;
+  int? totalSongs;
+  int? totalAlbums;
 
   Artist({
     super.id,
@@ -18,12 +20,16 @@ class Artist extends BaseModel {
     this.avatarUrl,
     this.albums,
     this.songs,
+    this.totalSongs,
+    this.totalAlbums,
   });
 
   Artist.fromJson(Map<String, dynamic> json) : super.fromJson(json) {
     name = json['name'];
     bio = json['bio'];
     avatarUrl = json['avatarUrl'];
+    totalSongs = json['totalSongs'];
+    totalAlbums = json['totalAlbums'];
     if (json['albums'] != null) {
       albums = <Album>[];
       json['albums'].forEach((v) {
@@ -44,6 +50,8 @@ class Artist extends BaseModel {
     data['name'] = name;
     data['bio'] = bio;
     data['avatarUrl'] = avatarUrl;
+    data['totalSongs'] = totalSongs;
+    data['totalAlbums'] = totalAlbums;
     if (albums != null) {
       data['albums'] = albums!.map((v) => v.toJson()).toList();
     }

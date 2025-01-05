@@ -308,14 +308,14 @@ class _SearchScreenState extends State<SearchScreen> with SingleTickerProviderSt
               // Show options
             },
           ),
-          onTap: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (context) => const NowPlayingScreen(),
-              ),
-            );
-          },
+          // onTap: () {
+          //   Navigator.push(
+          //     context,
+          //     MaterialPageRoute(
+          //       builder: (context) => const NowPlayingScreen(),
+          //     ),
+          //   );
+          // },
         );
       },
     );

@@ -5,9 +5,12 @@ import 'genre.dart';
 
 class Song extends BaseModel {
   late String title;
-  late Artist artist;
-  Album? album;
-  late Genre genre;
+  late String artistName;
+  late int artistId;
+  String? albumTitle;
+  int? albumId;
+  late String genreName;
+  late int genreId;
   late int duration;
   late String filePath;
   String? lyrics;
@@ -18,9 +21,12 @@ class Song extends BaseModel {
     super.createdDate,
     super.updatedDate,
     required this.title,
-    required this.artist,
-    this.album,
-    required this.genre,
+    required this.artistName,
+    required this.artistId,
+    this.albumTitle,
+    this.albumId,
+    required this.genreName,
+    required this.genreId,
     required this.duration,
     required this.filePath,
     this.lyrics,
@@ -29,9 +35,12 @@ class Song extends BaseModel {
 
   Song.fromJson(Map<String, dynamic> json) : super.fromJson(json) {
     title = json['title'];
-    artist = Artist.fromJson(json['artist']);
-    album = json['album'] != null ? Album.fromJson(json['album']) : null;
-    genre = Genre.fromJson(json['genre']);
+    artistName = json['artistName'];
+    artistId = json['artistId'];
+    albumTitle = json['albumTitle'];
+    albumId = json['albumId'];
+    genreName = json['genreName'];
+    genreId = json['genreId'];
     duration = json['duration'];
     filePath = json['filePath'];
     lyrics = json['lyrics'];
@@ -42,15 +51,12 @@ class Song extends BaseModel {
   Map<String, dynamic> toJson() {
     final Map<String, dynamic> data = super.toJson();
     data['title'] = title;
-    if (artist != null) {
-      data['artist'] = artist!.toJson();
-    }
-    if (album != null) {
-      data['album'] = album!.toJson();
-    }
-    if (genre != null) {
-      data['genre'] = genre!.toJson();
-    }
+    data['artistName'] = artistName;
+    data['artistId'] = artistId;
+    data['albumTitle'] = albumTitle;
+    data['albumId'] = albumId;
+    data['genreName'] = genreName;
+    data['genreId'] = genreId;
     data['duration'] = duration;
     data['filePath'] = filePath;
     data['lyrics'] = lyrics;

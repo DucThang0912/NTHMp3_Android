@@ -12,7 +12,7 @@ class ApiService {
       print('Response body: ${response.body}'); // Log response body
 
       if (response.statusCode == 200) {
-        return json.decode(response.body);
+        return json.decode(utf8.decode(response.bodyBytes));
       }
       throw Exception('Failed to load data: ${response.statusCode}');
     } catch (e) {
@@ -39,7 +39,7 @@ class ApiService {
       print('Response body: ${response.body}');
 
       if (response.statusCode == 200) {
-        return json.decode(response.body);
+        return json.decode(utf8.decode(response.bodyBytes));
       }
       throw Exception('Failed to create data: ${response.statusCode}');
     } catch (e) {

@@ -224,14 +224,14 @@ class _AlbumScreenState extends State<AlbumScreen> {
               const Icon(Icons.more_vert, color: Colors.grey),
             ],
           ),
-          onTap: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (context) => const NowPlayingScreen(),
-              ),
-            );
-          },
+          // onTap: () {
+          //   Navigator.push(
+          //     context,
+          //     MaterialPageRoute(
+          //       builder: (context) => const NowPlayingScreen(),
+          //     ),
+          //   );
+          // },
         );
       },
     );
