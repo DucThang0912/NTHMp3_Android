@@ -45,7 +45,21 @@ public class ArtistDataInitializer implements CommandLineRunner {
             new Object[]{"Justatee", "Nguyễn Thanh Tuấn, thường được biết đến với nghệ danh Justatee, là một nam ca sĩ người Việt Nam.", "https://avatar-artist/justatee.jpg"},
             new Object[]{"Phương Ly", "Phương Ly là một nữ ca sĩ người Việt Nam.", "https://avatar-artist/phuongly.jpg"},
             new Object[]{"Soobin Hoàng Sơn", "Nguyễn Hoàng Sơn, thường được biết đến với nghệ danh Soobin Hoàng Sơn, là một nam ca sĩ người Việt Nam.", "https://avatar-artist/soobin.jpg"},
-            new Object[]{"Chi Pu", "Nguyễn Thùy Chi, thường được biết đến với nghệ danh Chi Pu, là một nữ ca sĩ, diễn viên người Việt Nam.", "https://avatar-artist/chipu.jpg"}
+            new Object[]{"Chi Pu", "Nguyễn Thùy Chi, thường được biết đến với nghệ danh Chi Pu, là một nữ ca sĩ, diễn viên người Việt Nam.", "https://avatar-artist/chipu.jpg"},
+            new Object[]{"Ed Sheeran", "Edward Christopher Sheeran is an English singer-songwriter.", "https://avatar-artist/edsheeran.jpg"},
+            new Object[]{"The Weeknd", "Abel Makkonen Tesfaye, known professionally as The Weeknd, is a Canadian singer-songwriter.", "https://avatar-artist/theweeknd.jpg"},
+            new Object[]{"Billie Eilish", "Billie Eilish Pirate Baird O'Connell is an American singer-songwriter.", "https://avatar-artist/billieeilish.jpg"},
+            new Object[]{"Sam Smith", "Samuel Frederick Smith is an English singer and songwriter.", "https://avatar-artist/samsmith.jpg"},
+            new Object[]{"BTS", "BTS is a South Korean boy band formed by Big Hit Entertainment.", "https://avatar-artist/bts.jpg"},
+            new Object[]{"BLACKPINK", "BLACKPINK is a South Korean girl group formed by YG Entertainment.", "https://avatar-artist/blackpink.jpg"},
+            new Object[]{"Linkin Park", "Linkin Park is an American rock band from Agoura Hills, California.", "https://avatar-artist/linkinpark.jpg"},
+            new Object[]{"Guns N' Roses", "Guns N' Roses is an American hard rock band from Los Angeles, California.", "https://avatar-artist/gunsnroses.jpg"},
+            new Object[]{"Alan Walker", "Alan Olav Walker is a Norwegian music producer and DJ.", "https://avatar-artist/alanwalker.jpg"},
+            new Object[]{"Avicii", "Tim Bergling, known professionally as Avicii, was a Swedish DJ and music producer.", "https://avatar-artist/avicii.jpg"},
+            new Object[]{"Eminem", "Marshall Bruce Mathers III, known professionally as Eminem, is an American rapper.", "https://avatar-artist/eminem.jpg"},
+            new Object[]{"Travis Scott", "Jacques Bermon Webster II, known professionally as Travis Scott, is an American rapper.", "https://avatar-artist/travisscott.jpg"},
+            new Object[]{"John Legend", "John Roger Stephens, known professionally as John Legend, is an American singer-songwriter.", "https://avatar-artist/johnlegend.jpg"},
+            new Object[]{"Beyoncé", "Beyoncé Giselle Knowles-Carter is an American singer, songwriter, and actress.", "https://avatar-artist/beyonce.jpg"}
         );
 
         // Thêm từng nghệ sĩ

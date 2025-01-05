@@ -94,7 +94,43 @@ public class SongDataInitializer implements CommandLineRunner {
             
             // Jack Songs
             new Object[]{"Sóng Gió", "Jack", null, "V-Pop", 281, "/songs/songgio.mp3", "Lyrics sóng gió..."},
-            new Object[]{"Bạc Phận", "Jack", null, "V-Pop", 293, "/songs/bacphan.mp3", "Lyrics bạc phận..."}
+            new Object[]{"Bạc Phận", "Jack", null, "V-Pop", 293, "/songs/bacphan.mp3", "Lyrics bạc phận..."},
+            
+            // US-UK Songs
+            new Object[]{"Shape of You", "Ed Sheeran", "÷ (Divide)", "US-UK", 234, "/songs/shapeofyou.mp3", "Lyrics shape of you..."},
+            new Object[]{"Blinding Lights", "The Weeknd", "After Hours", "US-UK", 201, "/songs/blindinglights.mp3", "Lyrics blinding lights..."},
+            new Object[]{"Bad Guy", "Billie Eilish", "When We All Fall Asleep", "US-UK", 194, "/songs/badguy.mp3", "Lyrics bad guy..."},
+            new Object[]{"Stay With Me", "Sam Smith", "In The Lonely Hour", "US-UK", 173, "/songs/staywithme.mp3", "Lyrics stay with me..."},
+            
+            // K-Pop Songs
+            new Object[]{"Butter", "BTS", "Butter", "K-Pop", 164, "/songs/butter.mp3", "Lyrics butter..."},
+            new Object[]{"How You Like That", "BLACKPINK", "THE ALBUM", "K-Pop", 182, "/songs/howyoulikethat.mp3", "Lyrics how you like that..."},
+            new Object[]{"Boy With Luv", "BTS", "Map of the Soul: Persona", "K-Pop", 229, "/songs/boywithluv.mp3", "Lyrics boy with luv..."},
+            
+            // Rock Songs
+            new Object[]{"Numb", "Linkin Park", "Meteora", "Rock", 187, "/songs/numb.mp3", "Lyrics numb..."},
+            new Object[]{"Sweet Child O' Mine", "Guns N' Roses", "Appetite for Destruction", "Rock", 356, "/songs/sweetchild.mp3", "Lyrics sweet child..."},
+            
+            // EDM Songs
+            new Object[]{"Faded", "Alan Walker", "Different World", "EDM", 212, "/songs/faded.mp3", "Lyrics faded..."},
+            new Object[]{"The Nights", "Avicii", "The Days / Nights", "EDM", 176, "/songs/thenights.mp3", "Lyrics the nights..."},
+            
+            // Rap/Hip Hop Songs
+            new Object[]{"Rap God", "Eminem", "The Marshall Mathers LP 2", "Rap/Hip Hop", 363, "/songs/rapgod.mp3", "Lyrics rap god..."},
+            new Object[]{"Sicko Mode", "Travis Scott", "Astroworld", "Rap/Hip Hop", 312, "/songs/sickomode.mp3", "Lyrics sicko mode..."},
+            
+            // V-Pop Songs (Additional)
+            new Object[]{"Hãy Trao Cho Anh", "Sơn Tùng M-TP", null, "V-Pop", 243, "/songs/haytraochoanh.mp3", "Lyrics hãy trao cho anh..."},
+            new Object[]{"Tháng Năm", "Soobin Hoàng Sơn", null, "V-Pop", 267, "/songs/thangnam.mp3", "Lyrics tháng năm..."},
+            
+            // Ballad Songs
+            new Object[]{"All of Me", "John Legend", "Love in the Future", "Ballad", 269, "/songs/allofme.mp3", "Lyrics all of me..."},
+            new Object[]{"Perfect", "Ed Sheeran", "÷ (Divide)", "Ballad", 263, "/songs/perfect.mp3", "Lyrics perfect..."},
+            
+            // R&B Songs
+            new Object[]{"Earned It", "The Weeknd", "Beauty Behind the Madness", "R&B", 277, "/songs/earnedit.mp3", "Lyrics earned it..."},
+            new Object[]{"Love On Top", "Beyoncé", "4", "R&B", 267, "/songs/loveontop.mp3", "Lyrics love on top..."},
+            new Object[]{"Thinking Out Loud", "Ed Sheeran", "x (Multiply)", "R&B", 281, "/songs/thinkingoutloud.mp3", "Lyrics thinking out loud..."}
         );
 
         for (Object[] info : songInfos) {
