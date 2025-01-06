@@ -1,5 +1,6 @@
 package com.app.nth_mp3.model;
 
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.JoinColumn;
@@ -29,6 +30,7 @@ public class User extends Base {
 
     private String password; // mật khẩu
 
+    @Column(name = "full_name")
     private String fullName; // họ tên
 
     private String email; // email

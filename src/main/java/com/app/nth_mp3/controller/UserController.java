@@ -103,7 +103,7 @@ public class UserController {
 
     // Cập nhật thông tin cá nhân
     @PutMapping("/{id}/profile")
-    @PreAuthorize("hasRole('USER')")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('USER')")
     public ResponseEntity<Void> updateProfile(
             @PathVariable Long id,
             @Valid @RequestBody User user) {
