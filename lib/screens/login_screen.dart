@@ -7,6 +7,9 @@ import 'register_screen.dart';
 import 'home_screen.dart';
 import 'package:provider/provider.dart';
 import '../providers/auth_provider.dart';
+import 'package:google_sign_in/google_sign_in.dart';
+import 'package:flutter_facebook_auth/flutter_facebook_auth.dart';
+import '../models/auth/social_login_request.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -191,6 +194,109 @@ class _LoginScreenState extends State<LoginScreen>
     }
   }
 
+  Future<void> _handleGoogleLogin(BuildContext context) async {
+    try {
+      // Kiểm tra Google Play Services
+      final GoogleSignIn googleSignIn = GoogleSignIn(
+        scopes: [
+          'email',
+          'https://www.googleapis.com/auth/userinfo.profile',
+        ],
+      );
+
+      print("Bắt đầu đăng nhập Google...");
+
+      // Kiểm tra Google Play Services
+      try {
+        final status = await googleSignIn.signInSilently();
+        print("Google Play Services status: $status");
+      } catch (e) {
+        print("Lỗi Google Play Services: $e");
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Vui lòng cài đặt Google Play Services'),
+            backgroundColor: Colors.red,
+            duration: Duration(seconds: 5),
+          ),
+        );
+        return;
+      }
+
+      final isSignedIn = await googleSignIn.isSignedIn();
+      print("Đã đăng nhập trước đó: $isSignedIn");
+
+      if (isSignedIn) {
+        await googleSignIn.signOut();
+        print("Đã đăng xuất tài khoản cũ");
+      }
+
+      print("Đang thử đăng nhập...");
+      final GoogleSignInAccount? account = await googleSignIn.signIn();
+
+      if (account != null) {
+        print("Đăng nhập Google thành công: ${account.email}");
+        final GoogleSignInAuthentication auth = await account.authentication;
+
+        final request = SocialLoginRequest(
+          accessToken: auth.accessToken!,
+          provider: SocialProvider.GOOGLE,
+        );
+
+        final success = await Provider.of<AuthProvider>(context, listen: false)
+            .socialLogin(request);
+
+        if (success && mounted) {
+          Navigator.pushAndRemoveUntil(
+            context,
+            MaterialPageRoute(builder: (context) => const HomeScreen()),
+            (route) => false,
+          );
+        }
+      } else {
+        print("Người dùng hủy đăng nhập");
+      }
+    } catch (e) {
+      print("Lỗi chi tiết: $e");
+      if (e.toString().contains("8:")) {
+        print("Lỗi Google Play Services không khả dụng");
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Vui lòng cài đặt và cập nhật Google Play Services'),
+            backgroundColor: Colors.red,
+            duration: Duration(seconds: 5),
+          ),
+        );
+      }
+    }
+  }
+
+  Future<void> _handleFacebookLogin(BuildContext context) async {
+    try {
+      final LoginResult result = await FacebookAuth.instance.login();
+      if (result.status == LoginStatus.success) {
+        final request = SocialLoginRequest(
+          accessToken: result.accessToken!.token,
+          provider: SocialProvider.FACEBOOK,
+        );
+
+        final success = await Provider.of<AuthProvider>(context, listen: false)
+            .socialLogin(request);
+
+        if (success && mounted) {
+          Navigator.pushAndRemoveUntil(
+            context,
+            MaterialPageRoute(builder: (context) => const HomeScreen()),
+            (route) => false,
+          );
+        }
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Đăng nhập Facebook thất bại: $e')),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Consumer<AuthProvider>(
@@ -371,13 +477,15 @@ class _LoginScreenState extends State<LoginScreen>
                                   _buildSocialButton(
                                     icon: FontAwesomeIcons.google,
                                     color: Colors.red,
-                                    onPressed: () {},
+                                    onPressed: () =>
+                                        _handleGoogleLogin(context),
                                   ),
                                   const SizedBox(width: 20),
                                   _buildSocialButton(
                                     icon: FontAwesomeIcons.facebook,
                                     color: const Color(0xFF1877F2),
-                                    onPressed: () {},
+                                    onPressed: () =>
+                                        _handleFacebookLogin(context),
                                   ),
                                 ],
                               ),

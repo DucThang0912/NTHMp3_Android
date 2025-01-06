@@ -1,50 +1,55 @@
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class ApiService {
   static const String baseUrl = 'http://10.0.2.2:8080/api';
 
-  Future<dynamic> get(String endpoint) async {
-    try {
-      print('GET Request to: $baseUrl/$endpoint'); // Log request
-      final response = await http.get(Uri.parse('$baseUrl/$endpoint'));
-      print('Response status: ${response.statusCode}'); // Log status code
-      print('Response body: ${response.body}'); // Log response body
+  Future<Map<String, String>> _getHeaders() async {
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString('jwt_token');
 
-      if (response.statusCode == 200) {
-        return json.decode(utf8.decode(response.bodyBytes));
-      }
-      throw Exception('Failed to load data: ${response.statusCode}');
-    } catch (e) {
-      print('Error during GET request: $e'); // Log error
-      throw e;
-    }
+    return {
+      'Content-Type': 'application/json',
+      'Authorization': token != null ? 'Bearer $token' : '',
+    };
   }
 
-  Future<dynamic> post(String endpoint, Map<String, dynamic> data) async {
-    try {
-      print('POST Request to: $baseUrl/$endpoint');
-      print('Request body: $data');
+  // Lấy dữ liệu từ server
+  Future<dynamic> get(String endpoint) async {
+    final response = await http.get(
+      Uri.parse('$baseUrl/$endpoint'),
+      headers: await _getHeaders(),
+    );
+    return _handleResponse(response);
+  }
 
-      final response = await http.post(
-        Uri.parse('$baseUrl/$endpoint'),
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
-        },
-        body: json.encode(data),
-      );
+  // Gửi dữ liệu đến server
+  Future<dynamic> post(String endpoint, dynamic data) async {
+    final response = await http.post(
+      Uri.parse('$baseUrl/$endpoint'),
+      headers: await _getHeaders(),
+      body: jsonEncode(data),
+    );
+    return _handleResponse(response);
+  }
 
-      print('Response status: ${response.statusCode}');
-      print('Response body: ${response.body}');
+  // Cập nhật thông tin người dùng
+  Future<dynamic> put(String endpoint, dynamic data) async {
+    final response = await http.put(
+      Uri.parse('$baseUrl/$endpoint'),
+      headers: await _getHeaders(),
+      body: jsonEncode(data),
+    );
+    return _handleResponse(response);
+  }
 
-      if (response.statusCode == 200) {
-        return json.decode(utf8.decode(response.bodyBytes));
-      }
-      throw Exception('Failed to create data: ${response.statusCode}');
-    } catch (e) {
-      print('Error during POST request: $e');
-      throw e;
+  // Xử lý response từ server
+  dynamic _handleResponse(http.Response response) {
+    if (response.statusCode == 200) {
+      if (response.body.isEmpty) return null;
+      return jsonDecode(response.body);
     }
+    throw Exception('Request failed with status: ${response.statusCode}');
   }
 }

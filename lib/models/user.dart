@@ -33,7 +33,13 @@ class User extends BaseModel {
     avatar = json['avatar'];
     phone = json['phone'];
     location = json['location'];
-    role = json['role'] != null ? Role.fromJson(json['role']) : null;
+    if (json['role'] != null) {
+      if (json['role'] is int) {
+        role = Role(id: json['role']);
+      } else if (json['role'] is Map) {
+        role = Role.fromJson(json['role']);
+      }
+    }
   }
 
   @override
@@ -50,5 +56,22 @@ class User extends BaseModel {
       data['role'] = role!.toJson();
     }
     return data;
+  }
+
+  User copyWith({
+    String? fullName,
+    String? email,
+    String? phone,
+    String? location,
+  }) {
+    return User(
+      id: id,
+      username: username,
+      password: password,
+      email: email ?? this.email,
+      fullName: fullName ?? this.fullName,
+      phone: phone ?? this.phone,
+      location: location ?? this.location,
+    );
   }
 }

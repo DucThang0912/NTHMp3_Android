@@ -1,21 +1,31 @@
 import '../models/auth/login_request.dart';
 import '../models/auth/signup_request.dart';
 import '../models/auth/jwt_response.dart';
+import '../models/auth/social_login_request.dart';
 import 'api_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class AuthService {
   static const String TOKEN_KEY = 'jwt_token';
+  static const String USERNAME_KEY = 'username';
   final SharedPreferences _prefs;
   final ApiService _apiService = ApiService();
 
   AuthService(this._prefs);
 
+  // Đăng nhập
   Future<JwtResponse> login(LoginRequest request) async {
     final response = await _apiService.post('auth/login', request.toJson());
-    return JwtResponse.fromJson(response);
+    final jwtResponse = JwtResponse.fromJson(response);
+
+    // Lưu token và username
+    await _prefs.setString(TOKEN_KEY, jwtResponse.token);
+    await _prefs.setString(USERNAME_KEY, request.username);
+
+    return jwtResponse;
   }
 
+  // Đăng ký
   Future<bool> register(SignupRequest request) async {
     try {
       final response = await _apiService.post('auth/signup', request.toJson());
@@ -51,5 +61,19 @@ class AuthService {
   // Đăng xuất
   Future<void> logout() async {
     await _prefs.remove(TOKEN_KEY);
+    await _prefs.remove(USERNAME_KEY);
+  }
+
+  // Đăng nhập bằng OAuth
+  Future<JwtResponse> socialLogin(SocialLoginRequest request) async {
+    final response =
+        await _apiService.post('auth/social/login', request.toJson());
+    final jwtResponse = JwtResponse.fromJson(response);
+
+    // Lưu token và username từ response
+    await _prefs.setString(TOKEN_KEY, jwtResponse.token);
+    await _prefs.setString(USERNAME_KEY, jwtResponse.username);
+
+    return jwtResponse;
   }
 }
