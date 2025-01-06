@@ -7,12 +7,11 @@ import '../screens/artist_screen.dart';
 import '../widgets/main_screen_bottom_nav.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../screens/search_screen.dart';
-import '../services/genre_service.dart';
 import '../models/genre.dart';
-import '../services/song_service.dart';
 import '../models/song.dart';
-import '../services/artist_service.dart';
 import '../models/artist.dart';
+import 'package:provider/provider.dart';
+import '../providers/spotify_provider.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -120,6 +119,26 @@ class _FeaturedBanner extends StatefulWidget {
 class _FeaturedBannerState extends State<_FeaturedBanner> with SingleTickerProviderStateMixin {
   late AnimationController _controller;
   late Animation<double> _animation;
+  final List<Map<String, dynamic>> _bannerData = [
+    {
+      'title': 'Discover Music',
+      'subtitle': 'Let the rhythm move you',
+      'colors': [Color(0xFF6A3093), Color(0xFFA044FF)],
+      'icon': Icons.music_note,
+    },
+    {
+      'title': 'Top Charts',
+      'subtitle': 'What\'s hot right now',
+      'colors': [Color(0xFF1D976C), Color(0xFF93F9B9)],
+      'icon': Icons.trending_up,
+    },
+    {
+      'title': 'For You',
+      'subtitle': 'Personalized picks',
+      'colors': [Color(0xFFFF416C), Color(0xFFFF4B2B)],
+      'icon': Icons.favorite,
+    },
+  ];
 
   @override
   void initState() {
@@ -159,54 +178,69 @@ class _FeaturedBannerState extends State<_FeaturedBanner> with SingleTickerProvi
                       math.sin(_animation.value) * 1,
                     ),
                     end: Alignment(
-                      math.cos(_animation.value + 3.14) * 1,
-                      math.sin(_animation.value + 3.14) * 1,
+                      math.cos(_animation.value + math.pi) * 1,
+                      math.sin(_animation.value + math.pi) * 1,
                     ),
-                    colors: const [
-                      Color(0xFF6A3093),
-                      Color(0xFFA044FF),
-                      Color(0xFF6A3093),
-                    ],
+                    colors: _bannerData[index]['colors'],
                   ),
                 ),
                 child: Stack(
                   children: [
+                    // Animated Background Pattern
                     CustomPaint(
                       size: Size.infinite,
-                      painter: WavePainter(
-                        animation: _animation.value,
-                        color: Colors.white.withOpacity(0.1),
-                      ),
+                      painter: index == 0 
+                          ? WavePainter(animation: _animation.value, color: Colors.white.withOpacity(0.1))
+                          : index == 1 
+                              ? CirclePainter(animation: _animation.value, color: Colors.white.withOpacity(0.1))
+                              : BubblePainter(animation: _animation.value, color: Colors.white.withOpacity(0.1)),
                     ),
+                    // Content
                     Padding(
-                      padding: const EdgeInsets.all(16),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        mainAxisAlignment: MainAxisAlignment.center,
+                      padding: const EdgeInsets.all(20),
+                      child: Row(
                         children: [
-                          ShaderMask(
-                            shaderCallback: (bounds) => LinearGradient(
-                              colors: [
-                                Colors.white,
-                                Colors.white.withOpacity(0.5),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                ShaderMask(
+                                  shaderCallback: (bounds) => LinearGradient(
+                                    colors: [Colors.white, Colors.white.withOpacity(0.7)],
+                                  ).createShader(bounds),
+                                  child: Text(
+                                    _bannerData[index]['title'],
+                                    style: GoogleFonts.montserrat(
+                                      color: Colors.white,
+                                      fontSize: 32,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(height: 8),
+                                Text(
+                                  _bannerData[index]['subtitle'],
+                                  style: GoogleFonts.montserrat(
+                                    color: Colors.white.withOpacity(0.8),
+                                    fontSize: 16,
+                                  ),
+                                ),
                               ],
-                            ).createShader(bounds),
-                            child: Text(
-                              'Discover Music',
-                              style: GoogleFonts.montserrat(
-                                color: Colors.white,
-                                fontSize: 32,
-                                fontWeight: FontWeight.bold,
-                              ),
                             ),
                           ),
-                          const SizedBox(height: 8),
-                          Text(
-                            'Let the rhythm move you',
-                            style: GoogleFonts.montserrat(
-                              color: Colors.white.withOpacity(0.8),
-                              fontSize: 16,
-                            ),
+                          AnimatedBuilder(
+                            animation: _animation,
+                            builder: (context, child) {
+                              return Transform.rotate(
+                                angle: _animation.value,
+                                child: Icon(
+                                  _bannerData[index]['icon'],
+                                  color: Colors.white.withOpacity(0.8),
+                                  size: 60 + (math.sin(_animation.value) * 10),
+                                ),
+                              );
+                            },
                           ),
                         ],
                       ),
@@ -254,6 +288,60 @@ class WavePainter extends CustomPainter {
   bool shouldRepaint(WavePainter oldDelegate) => true;
 }
 
+class CirclePainter extends CustomPainter {
+  final double animation;
+  final Color color;
+
+  CirclePainter({required this.animation, required this.color});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = color
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 2.0;
+
+    for (var i = 0; i < 5; i++) {
+      final radius = (size.width / 4) * (i + 1) + (math.sin(animation + i) * 20);
+      canvas.drawCircle(
+        Offset(size.width / 2, size.height / 2),
+        radius,
+        paint,
+      );
+    }
+  }
+
+  @override
+  bool shouldRepaint(CirclePainter oldDelegate) => true;
+}
+
+class BubblePainter extends CustomPainter {
+  final double animation;
+  final Color color;
+
+  BubblePainter({required this.animation, required this.color});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = color
+      ..style = PaintingStyle.fill;
+
+    for (var i = 0; i < 10; i++) {
+      final x = math.cos(animation * 2 + i) * size.width / 2 + size.width / 2;
+      final y = math.sin(animation * 3 + i) * size.height / 2 + size.height / 2;
+      canvas.drawCircle(
+        Offset(x, y),
+        10 + math.sin(animation + i) * 5,
+        paint,
+      );
+    }
+  }
+
+  @override
+  bool shouldRepaint(BubblePainter oldDelegate) => true;
+}
+
 class _Genres extends StatefulWidget {
   const _Genres();
 
@@ -262,7 +350,6 @@ class _Genres extends StatefulWidget {
 }
 
 class _GenresState extends State<_Genres> {
-  final GenreService _genreService = GenreService();
   List<Genre> genres = [];
   bool isLoading = true;
 
@@ -274,7 +361,8 @@ class _GenresState extends State<_Genres> {
 
   Future<void> _loadGenres() async {
     try {
-      final loadedGenres = await _genreService.getAllGenres();
+      final spotifyProvider = Provider.of<SpotifyProvider>(context, listen: false);
+      final loadedGenres = await spotifyProvider.spotifyService.getGenres();
       setState(() {
         genres = loadedGenres;
         isLoading = false;
@@ -357,7 +445,6 @@ class _RecentlyPlayed extends StatefulWidget {
 }
 
 class _RecentlyPlayedState extends State<_RecentlyPlayed> {
-  final SongService _songService = SongService();
   List<Song> recentSongs = [];
   bool isLoading = true;
 
@@ -369,9 +456,8 @@ class _RecentlyPlayedState extends State<_RecentlyPlayed> {
 
   Future<void> _loadRecentSongs() async {
     try {
-      final songs = await _songService.getAllSongs();
-      // Sắp xếp theo createdDate mới nhất và lấy 10 bài
-      songs.sort((a, b) => b.createdDate!.compareTo(a.createdDate!));
+      final spotifyProvider = Provider.of<SpotifyProvider>(context, listen: false);
+      final songs = await spotifyProvider.spotifyService.getNewReleases();
       setState(() {
         recentSongs = songs.take(10).toList();
         isLoading = false;
@@ -462,13 +548,14 @@ class _RecentlyPlayedItem extends StatelessWidget {
                     ],
                   ),
                 ),
-                child: const Center(
-                  child: Icon(
-                    Icons.music_note,
-                    color: Colors.white,
-                    size: 50,
-                  ),
-                ),
+                child: song.imageUrl != null && song.imageUrl!.isNotEmpty
+                    ? Image.network(
+                        song.imageUrl!,
+                        width: 48,
+                        height: 48,
+                        fit: BoxFit.cover,
+                      )
+                    : const Icon(Icons.music_note, color: Colors.white),
               ),
             ),
             Padding(
@@ -511,7 +598,6 @@ class _TopTrending extends StatefulWidget {
 }
 
 class _TopTrendingState extends State<_TopTrending> {
-  final SongService _songService = SongService();
   List<Song> trendingSongs = [];
   bool isLoading = true;
 
@@ -523,11 +609,9 @@ class _TopTrendingState extends State<_TopTrending> {
 
   Future<void> _loadTrendingSongs() async {
     try {
-      final songs = await _songService.getAllSongs();
-      // Sắp xếp theo playCount giảm dần
-      songs.sort((a, b) => (b.playCount ?? 0).compareTo(a.playCount ?? 0));
+      final spotifyProvider = Provider.of<SpotifyProvider>(context, listen: false);
+      final songs = await spotifyProvider.spotifyService.searchSongs('top trending vietnam');
       setState(() {
-        // Lấy 10 bài hát đầu tiên
         trendingSongs = songs.take(10).toList();
         isLoading = false;
       });
@@ -601,27 +685,28 @@ class _TopTrendingItem extends StatelessWidget {
           children: [
             ClipRRect(
               borderRadius: const BorderRadius.vertical(top: Radius.circular(8)),
-              child: Container(
-                height: 160,
-                width: 160,
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                    colors: [
-                      Colors.purple.withOpacity(0.7),
-                      Colors.blue.withOpacity(0.7),
-                    ],
-                  ),
-                ),
-                child: const Center(
-                  child: Icon(
-                    Icons.music_note,
-                    color: Colors.white,
-                    size: 50,
-                  ),
-                ),
-              ),
+              child: song.imageUrl != null && song.imageUrl!.isNotEmpty
+                  ? Image.network(
+                      song.imageUrl!,
+                      height: 160,
+                      width: 160,
+                      fit: BoxFit.cover,
+                    )
+                  : Container(
+                      height: 160,
+                      width: 160,
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                          colors: [
+                            Colors.purple.withOpacity(0.7),
+                            Colors.blue.withOpacity(0.7),
+                          ],
+                        ),
+                      ),
+                      child: const Icon(Icons.music_note, color: Colors.white, size: 50),
+                    ),
             ),
             Padding(
               padding: const EdgeInsets.all(8.0),
@@ -663,62 +748,62 @@ class _NewReleases extends StatefulWidget {
 }
 
 class _NewReleasesState extends State<_NewReleases> with SingleTickerProviderStateMixin {
-  final SongService _songService = SongService();
-  List<Song> newSongs = [];
-  List<Song> trendingSongs = [];
+  late TabController _tabController;
+  final List<String> _tabs = ['Mới phát hành', 'BXH', 'V-Pop', 'K-Pop'];
+  List<Song> songs = [];
   List<Song> vPopSongs = [];
   List<Song> kPopSongs = [];
   bool isLoading = true;
-  late TabController _tabController;
-
-  final List<String> _tabs = [
-    'Mới phát hành',
-    'Bảng xếp hạng',
-    'V-Pop',
-    'K-Pop',
-  ];
 
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: _tabs.length, vsync: this);
-    _loadAllSongs();
-  }
-
-  Future<void> _loadAllSongs() async {
-    try {
-      final songs = await _songService.getAllSongs();
-      setState(() {
-        // Lấy danh sách trending songs (sắp xếp theo playCount)
-        trendingSongs = List.from(songs)
-          ..sort((a, b) => (b.playCount ?? 0).compareTo(a.playCount ?? 0))
-          ..take(10);
-
-        // Lọc bài hát V-Pop
-        vPopSongs = songs.where((song) => song.genreName == "V-Pop").toList();
-
-        // Lọc bài hát K-Pop
-        kPopSongs = songs.where((song) => song.genreName == "K-Pop").toList();
-
-        // Sắp xếp bài hát mới theo ngày tạo
-        newSongs = List.from(songs)
-          ..sort((a, b) => b.createdDate!.compareTo(a.createdDate!))
-          ..take(10);
-
-        isLoading = false;
-      });
-    } catch (e) {
-      print('Error loading songs: $e');
-      setState(() {
-        isLoading = false;
-      });
-    }
+    _loadSongs();
   }
 
   @override
   void dispose() {
     _tabController.dispose();
     super.dispose();
+  }
+
+  Future<void> _loadSongs() async {
+    try {
+      final spotifyProvider = Provider.of<SpotifyProvider>(context, listen: false);
+      
+      // Load new releases
+      final newReleases = await spotifyProvider.spotifyService.getNewReleases();
+      print('New Releases loaded: ${newReleases.length} songs');
+      
+      // Load top charts Vietnam
+      final topCharts = await spotifyProvider.spotifyService.searchSongs('top vietnam', market: 'VN');
+      print('Top Charts loaded: ${topCharts.length} songs');
+      
+      // Load V-Pop với query mới
+      final vPop = await spotifyProvider.spotifyService.searchSongs('Son Tung MTP Vu My Tam', market: 'VN');
+      print('V-Pop loaded: ${vPop.length} songs');
+      print('V-Pop songs: ${vPop.map((s) => s.title).toList()}');
+      
+      // Load K-Pop
+      final kPop = await spotifyProvider.spotifyService.searchSongsByGenre('k-pop');
+      print('K-Pop loaded: ${kPop.length} songs');
+
+      if (mounted) {
+        setState(() {
+          songs = newReleases;
+          vPopSongs = vPop;
+          kPopSongs = kPop;
+          isLoading = false;
+        });
+        print('State updated - vPopSongs length: ${vPopSongs.length}');
+      }
+    } catch (e) {
+      print('Error loading songs: $e');
+      if (mounted) {
+        setState(() => isLoading = false);
+      }
+    }
   }
 
   @override
@@ -759,9 +844,9 @@ class _NewReleasesState extends State<_NewReleases> with SingleTickerProviderSta
     
     return ListView.builder(
       padding: const EdgeInsets.all(16),
-      itemCount: newSongs.length,
+      itemCount: songs.length,
       itemBuilder: (context, index) {
-        final song = newSongs[index];
+        final song = songs[index];
         return Container(
           margin: const EdgeInsets.only(bottom: 8),
           decoration: BoxDecoration(
@@ -779,27 +864,28 @@ class _NewReleasesState extends State<_NewReleases> with SingleTickerProviderSta
             },
             leading: ClipRRect(
               borderRadius: BorderRadius.circular(4),
-              child: Container(
-                width: 48,
-                height: 48,
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                    colors: [
-                      Colors.purple.withOpacity(0.7),
-                      Colors.blue.withOpacity(0.7),
-                    ],
-                  ),
-                ),
-                child: const Center(
-                  child: Icon(
-                    Icons.music_note,
-                    color: Colors.white,
-                    size: 24,
-                  ),
-                ),
-              ),
+              child: song.imageUrl != null && song.imageUrl!.isNotEmpty
+                  ? Image.network(
+                      song.imageUrl!,
+                      width: 48,
+                      height: 48,
+                      fit: BoxFit.cover,
+                    )
+                  : Container(
+                      width: 48,
+                      height: 48,
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                          colors: [
+                            Colors.purple.withOpacity(0.7),
+                            Colors.blue.withOpacity(0.7),
+                          ],
+                        ),
+                      ),
+                      child: const Icon(Icons.music_note, color: Colors.white, size: 24),
+                    ),
             ),
             title: Text(
               song.title,
@@ -853,9 +939,9 @@ class _NewReleasesState extends State<_NewReleases> with SingleTickerProviderSta
 
     return ListView.builder(
       padding: const EdgeInsets.all(16),
-      itemCount: trendingSongs.length,
+      itemCount: songs.length,
       itemBuilder: (context, index) {
-        final song = trendingSongs[index];
+        final song = songs[index];
         return Container(
           margin: const EdgeInsets.only(bottom: 8),
           decoration: BoxDecoration(
@@ -881,21 +967,28 @@ class _NewReleasesState extends State<_NewReleases> with SingleTickerProviderSta
                 const SizedBox(width: 8),
                 ClipRRect(
                   borderRadius: BorderRadius.circular(4),
-                  child: Container(
-                    width: 48,
-                    height: 48,
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                        colors: [
-                          Colors.purple.withOpacity(0.7),
-                          Colors.blue.withOpacity(0.7),
-                        ],
-                      ),
-                    ),
-                    child: const Icon(Icons.music_note, color: Colors.white),
-                  ),
+                  child: song.imageUrl != null && song.imageUrl!.isNotEmpty
+                      ? Image.network(
+                          song.imageUrl!,
+                          width: 48,
+                          height: 48,
+                          fit: BoxFit.cover,
+                        )
+                      : Container(
+                          width: 48,
+                          height: 48,
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
+                              colors: [
+                                Colors.purple.withOpacity(0.7),
+                                Colors.blue.withOpacity(0.7),
+                              ],
+                            ),
+                          ),
+                          child: const Icon(Icons.music_note, color: Colors.white),
+                        ),
                 ),
               ],
             ),
@@ -910,10 +1003,6 @@ class _NewReleasesState extends State<_NewReleases> with SingleTickerProviderSta
               style: TextStyle(color: Colors.grey[400]),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
-            ),
-            trailing: Text(
-              '${song.playCount ?? 0} plays',
-              style: TextStyle(color: Colors.grey[400], fontSize: 12),
             ),
             onTap: () {
               Navigator.push(
@@ -969,21 +1058,28 @@ class _NewReleasesState extends State<_NewReleases> with SingleTickerProviderSta
       child: ListTile(
         leading: ClipRRect(
           borderRadius: BorderRadius.circular(4),
-          child: Container(
-            width: 48,
-            height: 48,
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [
-                  Colors.purple.withOpacity(0.7),
-                  Colors.blue.withOpacity(0.7),
-                ],
-              ),
-            ),
-            child: const Icon(Icons.music_note, color: Colors.white),
-          ),
+          child: song.imageUrl != null && song.imageUrl!.isNotEmpty
+              ? Image.network(
+                  song.imageUrl!,
+                  width: 48,
+                  height: 48,
+                  fit: BoxFit.cover,
+                )
+              : Container(
+                  width: 48,
+                  height: 48,
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: [
+                        Colors.purple.withOpacity(0.7),
+                        Colors.blue.withOpacity(0.7),
+                      ],
+                    ),
+                  ),
+                  child: const Icon(Icons.music_note, color: Colors.white, size: 24),
+                ),
         ),
         title: Text(
           song.title,
@@ -1100,31 +1196,25 @@ class _TopArtists extends StatefulWidget {
 }
 
 class _TopArtistsState extends State<_TopArtists> {
-  final ArtistService _artistService = ArtistService();
   List<Artist> artists = [];
   bool isLoading = true;
 
   @override
   void initState() {
     super.initState();
-    _loadTopArtists();
+    _loadArtists();
   }
 
-  Future<void> _loadTopArtists() async {
+  Future<void> _loadArtists() async {
     try {
-      final loadedArtists = await _artistService.getAllArtists();
-      // Sắp xếp theo tổng số bài hát và album
-      loadedArtists.sort((a, b) {
-        final aTotal = (a.totalSongs ?? 0) + (a.totalAlbums ?? 0);
-        final bTotal = (b.totalSongs ?? 0) + (b.totalAlbums ?? 0);
-        return bTotal.compareTo(aTotal);
-      });
+      final spotifyProvider = Provider.of<SpotifyProvider>(context, listen: false);
+      final loadedArtists = await spotifyProvider.spotifyService.getTopArtists();
       setState(() {
-        artists = loadedArtists.take(10).toList(); // Lấy 10 nghệ sĩ hàng đầu
+        artists = loadedArtists;
         isLoading = false;
       });
     } catch (e) {
-      print('Error loading top artists: $e');
+      print('Error loading artists: $e');
       setState(() {
         isLoading = false;
       });
@@ -1177,7 +1267,7 @@ class _ArtistItem extends StatelessWidget {
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (context) => ArtistScreen(artistId: artist.id!),
+            builder: (context) => ArtistScreen(artistId: artist.spotifyId),
           ),
         );
       },
@@ -1186,28 +1276,30 @@ class _ArtistItem extends StatelessWidget {
         margin: const EdgeInsets.only(right: 16),
         child: Column(
           children: [
-            ClipOval(
-              child: Container(
-                width: 100,
-                height: 100,
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                    colors: [
-                      Colors.purple.withOpacity(0.7),
-                      Colors.blue.withOpacity(0.7),
-                    ],
-                  ),
-                ),
-                child: const Center(
-                  child: Icon(
-                    Icons.person,
-                    color: Colors.white,
-                    size: 40,
-                  ),
-                ),
-              ),
+            ClipRRect(
+              borderRadius: BorderRadius.circular(60),
+              child: artist.avatarUrl != null && artist.avatarUrl!.isNotEmpty
+                  ? Image.network(
+                      artist.avatarUrl!,
+                      width: 120,
+                      height: 120,
+                      fit: BoxFit.cover,
+                    )
+                  : Container(
+                      width: 120,
+                      height: 120,
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                          colors: [
+                            Colors.purple.withOpacity(0.7),
+                            Colors.blue.withOpacity(0.7),
+                          ],
+                        ),
+                      ),
+                      child: const Icon(Icons.person, color: Colors.white, size: 50),
+                    ),
             ),
             const SizedBox(height: 8),
             Text(

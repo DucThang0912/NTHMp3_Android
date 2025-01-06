@@ -3,6 +3,9 @@ import 'album.dart';
 import 'song.dart';
 
 class Artist extends BaseModel {
+  @override
+  int? get id => int.tryParse(_id);
+  final String _id;
   String? name;
   String? bio;
   String? avatarUrl;
@@ -12,7 +15,7 @@ class Artist extends BaseModel {
   int? totalAlbums;
 
   Artist({
-    super.id,
+    required String id,
     super.createdDate,
     super.updatedDate,
     this.name,
@@ -22,27 +25,29 @@ class Artist extends BaseModel {
     this.songs,
     this.totalSongs,
     this.totalAlbums,
-  });
+  }) : _id = id;
 
-  Artist.fromJson(Map<String, dynamic> json) : super.fromJson(json) {
-    name = json['name'];
-    bio = json['bio'];
-    avatarUrl = json['avatarUrl'];
-    totalSongs = json['totalSongs'];
-    totalAlbums = json['totalAlbums'];
-    if (json['albums'] != null) {
-      albums = <Album>[];
-      json['albums'].forEach((v) {
-        albums!.add(Album.fromJson(v));
-      });
+  Artist.fromJson(Map<String, dynamic> json) : 
+    _id = json['id']?.toString() ?? '0',
+    super.fromJson(json) {
+      name = json['name'];
+      bio = json['bio'];
+      avatarUrl = json['avatarUrl'];
+      totalSongs = json['totalSongs'];
+      totalAlbums = json['totalAlbums'];
+      if (json['albums'] != null) {
+        albums = <Album>[];
+        json['albums'].forEach((v) {
+          albums!.add(Album.fromJson(v));
+        });
+      }
+      if (json['songs'] != null) {
+        songs = <Song>[];
+        json['songs'].forEach((v) {
+          songs!.add(Song.fromJson(v));
+        });
+      }
     }
-    if (json['songs'] != null) {
-      songs = <Song>[];
-      json['songs'].forEach((v) {
-        songs!.add(Song.fromJson(v));
-      });
-    }
-  }
 
   @override
   Map<String, dynamic> toJson() {
@@ -60,4 +65,6 @@ class Artist extends BaseModel {
     }
     return data;
   }
+
+  String get spotifyId => _id;
 }

@@ -3,6 +3,11 @@ import '../constants/colors.dart';
 import 'package:lottie/lottie.dart';
 import '../screens/now_playing_screen.dart';
 import '../widgets/main_screen_bottom_nav.dart';
+import 'package:provider/provider.dart';
+import '../services/spotify_service.dart';
+import '../models/genre.dart';
+import '../models/song.dart';
+import '../providers/spotify_provider.dart';
 
 class SearchScreen extends StatefulWidget {
   const SearchScreen({super.key});
@@ -16,23 +21,12 @@ class _SearchScreenState extends State<SearchScreen> with SingleTickerProviderSt
   bool _isSearching = false;
   late AnimationController _animationController;
   late Animation<double> _animation;
-
-  final List<String> _trendingSearches = [
-    'Sơn Tùng MTP',
-    'Taylor Swift',
-    'BlackPink',
-    'BTS',
-    'Jack',
-  ];
-
-  final List<Map<String, dynamic>> _categories = [
-    {'name': 'Pop', 'color': Colors.pink, 'icon': Icons.music_note},
-    {'name': 'Rock', 'color': Colors.blue, 'icon': Icons.electric_bolt},
-    {'name': 'Jazz', 'color': Colors.orange, 'icon': Icons.piano},
-    {'name': 'Classical', 'color': Colors.purple, 'icon': Icons.album},
-    {'name': 'Hip Hop', 'color': Colors.green, 'icon': Icons.mic},
-    {'name': 'Electronic', 'color': Colors.red, 'icon': Icons.headphones},
-  ];
+  late SpotifyService _spotifyService;
+  List<Genre> _genres = [];
+  List<Song> _trendingSongs = [];
+  bool _isLoading = true;
+  List<Song> _searchResults = [];
+  bool _isSearchLoading = false;
 
   @override
   void initState() {
@@ -45,13 +39,25 @@ class _SearchScreenState extends State<SearchScreen> with SingleTickerProviderSt
     _animation = Tween<double>(begin: 0, end: 1).animate(
       CurvedAnimation(parent: _animationController, curve: Curves.easeInOut),
     );
+
+    _spotifyService = Provider.of<SpotifyProvider>(context, listen: false).spotifyService;
+    _loadData();
   }
 
-  @override
-  void dispose() {
-    _searchController.dispose();
-    _animationController.dispose();
-    super.dispose();
+  Future<void> _loadData() async {
+    try {
+      final genres = await _spotifyService.getGenres();
+      final trendingSongs = await _spotifyService.searchSongs('tag:hipster');
+      
+      setState(() {
+        _genres = genres;
+        _trendingSongs = trendingSongs.take(5).toList();
+        _isLoading = false;
+      });
+    } catch (e) {
+      print('Error loading data: $e');
+      setState(() => _isLoading = false);
+    }
   }
 
   Widget _buildSearchBar() {
@@ -79,10 +85,24 @@ class _SearchScreenState extends State<SearchScreen> with SingleTickerProviderSt
               color: Colors.white,
               fontSize: 14,
             ),
-            onChanged: (value) {
+            onChanged: (value) async {
               setState(() {
                 _isSearching = value.isNotEmpty;
+                _isSearchLoading = value.isNotEmpty;
               });
+              
+              if (value.isNotEmpty) {
+                try {
+                  final results = await _spotifyService.searchSongs(value);
+                  setState(() {
+                    _searchResults = results;
+                    _isSearchLoading = false;
+                  });
+                } catch (e) {
+                  print('Error searching songs: $e');
+                  setState(() => _isSearchLoading = false);
+                }
+              }
             },
             decoration: InputDecoration(
               hintText: 'Tìm kiếm bài hát, nghệ sĩ...',
@@ -114,6 +134,10 @@ class _SearchScreenState extends State<SearchScreen> with SingleTickerProviderSt
   }
 
   Widget _buildTrendingSearches() {
+    if (_isLoading) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -133,7 +157,7 @@ class _SearchScreenState extends State<SearchScreen> with SingleTickerProviderSt
           child: ListView.builder(
             scrollDirection: Axis.horizontal,
             padding: const EdgeInsets.symmetric(horizontal: 16),
-            itemCount: _trendingSearches.length,
+            itemCount: _trendingSongs.length,
             itemBuilder: (context, index) {
               return Container(
                 margin: const EdgeInsets.only(right: 8),
@@ -158,7 +182,7 @@ class _SearchScreenState extends State<SearchScreen> with SingleTickerProviderSt
                     child: InkWell(
                       borderRadius: BorderRadius.circular(25),
                       onTap: () {
-                        _searchController.text = _trendingSearches[index];
+                        _searchController.text = _trendingSongs[index].title;
                         setState(() {
                           _isSearching = true;
                         });
@@ -166,7 +190,7 @@ class _SearchScreenState extends State<SearchScreen> with SingleTickerProviderSt
                       child: Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                         child: Text(
-                          _trendingSearches[index],
+                          _trendingSongs[index].title,
                           style: const TextStyle(
                             color: Colors.white,
                             fontSize: 13,
@@ -185,6 +209,10 @@ class _SearchScreenState extends State<SearchScreen> with SingleTickerProviderSt
   }
 
   Widget _buildCategories() {
+    if (_isLoading) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -209,8 +237,9 @@ class _SearchScreenState extends State<SearchScreen> with SingleTickerProviderSt
             crossAxisSpacing: 10,
             mainAxisSpacing: 10,
           ),
-          itemCount: _categories.length,
+          itemCount: _genres.length,
           itemBuilder: (context, index) {
+            final color = Colors.primaries[index % Colors.primaries.length];
             return AnimatedBuilder(
               animation: _animation,
               builder: (context, child) {
@@ -220,14 +249,14 @@ class _SearchScreenState extends State<SearchScreen> with SingleTickerProviderSt
                       begin: Alignment.topLeft,
                       end: Alignment.bottomRight,
                       colors: [
-                        _categories[index]['color'],
-                        _categories[index]['color'].withOpacity(0.5),
+                        color,
+                        color.withOpacity(0.5),
                       ],
                     ),
                     borderRadius: BorderRadius.circular(15),
                     boxShadow: [
                       BoxShadow(
-                        color: _categories[index]['color'].withOpacity(0.3),
+                        color: color.withOpacity(0.3),
                         blurRadius: 10 * _animation.value,
                         spreadRadius: 2 * _animation.value,
                       ),
@@ -238,19 +267,22 @@ class _SearchScreenState extends State<SearchScreen> with SingleTickerProviderSt
                     child: InkWell(
                       borderRadius: BorderRadius.circular(15),
                       onTap: () {
-                        // Navigate to category
+                        _searchController.text = _genres[index].name ?? '';
+                        setState(() {
+                          _isSearching = true;
+                        });
                       },
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           Icon(
-                            _categories[index]['icon'],
+                            Icons.music_note,
                             color: Colors.white,
                             size: 40 * (0.8 + (_animation.value * 0.2)),
                           ),
                           const SizedBox(height: 8),
                           Text(
-                            _categories[index]['name'],
+                            _genres[index].name ?? '',
                             style: const TextStyle(
                               color: Colors.white,
                               fontSize: 16,
@@ -271,51 +303,63 @@ class _SearchScreenState extends State<SearchScreen> with SingleTickerProviderSt
   }
 
   Widget _buildSearchResults() {
+    if (_isSearchLoading) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
     return ListView.builder(
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
-      itemCount: 10,
+      itemCount: _searchResults.length,
       itemBuilder: (context, index) {
+        final song = _searchResults[index];
         return ListTile(
           leading: Hero(
-            tag: 'song_$index',
-            child: Container(
-              width: 50,
-              height: 50,
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(8),
-                gradient: LinearGradient(
-                  colors: [
-                    Colors.purple.withOpacity(_animation.value),
-                    Colors.blue.withOpacity(_animation.value),
-                  ],
-                ),
-              ),
-              child: const Icon(Icons.music_note, color: Colors.white),
+            tag: 'song_${song.id}',
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(8),
+              child: song.imageUrl != null && song.imageUrl!.isNotEmpty
+                  ? Image.network(
+                      song.imageUrl!,
+                      width: 50,
+                      height: 50,
+                      fit: BoxFit.cover,
+                    )
+                  : Container(
+                      width: 50,
+                      height: 50,
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [
+                            Colors.purple.withOpacity(_animation.value),
+                            Colors.blue.withOpacity(_animation.value),
+                          ],
+                        ),
+                      ),
+                      child: const Icon(Icons.music_note, color: Colors.white),
+                    ),
             ),
           ),
-          title: const Text(
-            'Tên bài hát',
-            style: TextStyle(color: Colors.white),
+          title: Text(
+            song.title,
+            style: const TextStyle(color: Colors.white),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
           ),
-          subtitle: const Text(
-            'Tên nghệ sĩ',
-            style: TextStyle(color: Colors.grey),
+          subtitle: Text(
+            song.artistName,
+            style: const TextStyle(color: Colors.grey),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
           ),
-          trailing: IconButton(
-            icon: const Icon(Icons.more_vert, color: Colors.grey),
-            onPressed: () {
-              // Show options
-            },
-          ),
-          // onTap: () {
-          //   Navigator.push(
-          //     context,
-          //     MaterialPageRoute(
-          //       builder: (context) => const NowPlayingScreen(),
-          //     ),
-          //   );
-          // },
+          onTap: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => NowPlayingScreen(song: song),
+              ),
+            );
+          },
         );
       },
     );

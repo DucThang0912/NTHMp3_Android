@@ -1,8 +1,18 @@
 import 'package:flutter/material.dart';
-import 'package:lottie/lottie.dart';
 import '../constants/colors.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../models/song.dart';
+import 'dart:async';
+import 'package:just_audio/just_audio.dart';
+import 'package:provider/provider.dart';
+import '../providers/spotify_provider.dart';
+
+enum PlayMode {
+  none,        // Phát một lần rồi dừng
+  sequential,  // Phát lần lượt
+  shuffle,     // Phát ngẫu nhiên
+  repeatOne    // Lặp lại một bài
+}
 
 class NowPlayingScreen extends StatefulWidget {
   final Song song;
@@ -18,12 +28,17 @@ class NowPlayingScreen extends StatefulWidget {
 
 class _NowPlayingScreenState extends State<NowPlayingScreen> 
     with SingleTickerProviderStateMixin {
+  final AudioPlayer _audioPlayer = AudioPlayer();
+  final PageController _pageController = PageController();
+  Duration _duration = Duration.zero;
+  Duration _position = Duration.zero;
   bool isPlaying = false;
   bool isFavorite = false;
   double currentSliderValue = 0;
+  PlayMode _playMode = PlayMode.none;
   
-  final PageController _pageController = PageController();
   late AnimationController _rotationController;
+  late Song _currentSong;
   
   @override
   void initState() {
@@ -31,12 +46,122 @@ class _NowPlayingScreenState extends State<NowPlayingScreen>
     _rotationController = AnimationController(
       duration: const Duration(seconds: 10),
       vsync: this,
-    )..repeat();
+    );
+    
+    _currentSong = widget.song;
+    
+    _setupAudioPlayer();
+    
+    // Load song details when screen opens
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      if (mounted) {
+        final spotifyService = Provider.of<SpotifyProvider>(context, listen: false).spotifyService;
+        final updatedSong = await spotifyService.loadSongDetails(_currentSong);
+        
+        if (mounted) {
+          setState(() {
+            _currentSong = updatedSong;
+          });
+          _initializeAudio();
+        }
+      }
+    });
+  }
+
+  Future<void> _initializeAudio() async {
+    try {
+      print("Current song path: ${_currentSong.filePath}"); // Debug log
+      
+      if (_currentSong.filePath.isEmpty) {
+        throw Exception('No preview available');
+      }
+
+      // Đặt lại trạng thái
+      await _audioPlayer.stop();
+      await _audioPlayer.setUrl(_currentSong.filePath);
+      
+      // Lấy duration thực tế
+      final duration = await _audioPlayer.duration;
+      print("Audio duration: $duration"); // Debug log
+      
+      if (mounted) {
+        setState(() {
+          _duration = duration ?? const Duration(seconds: 30);
+          isPlaying = true;
+        });
+        
+        // Bắt đầu phát nhạc và animation
+        _rotationController.repeat();
+        await _audioPlayer.play();
+      }
+    } catch (e) {
+      print('Error initializing audio: $e');
+      if (mounted) {
+        setState(() => isPlaying = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              e.toString().contains('preview') 
+                ? 'Bài hát này không có bản preview' 
+                : 'Không thể phát bài hát này: ${e.toString()}'
+            ),
+          ),
+        );
+      }
+    }
+  }
+
+  void _setupAudioPlayer() {
+    _audioPlayer.durationStream.listen((duration) {
+      if (mounted) {
+        setState(() => _duration = duration ?? Duration.zero);
+      }
+    });
+
+    _audioPlayer.positionStream.listen((position) {
+      if (mounted) {
+        setState(() {
+          _position = position;
+          currentSliderValue = position.inSeconds.toDouble();
+        });
+      }
+    });
+
+    _audioPlayer.playerStateStream.listen((state) {
+      if (state.processingState == ProcessingState.completed) {
+        if (mounted) {
+          _handleSongEnd();
+        }
+      }
+    });
+  }
+
+  void _handleSongEnd() {
+    switch (_playMode) {
+      case PlayMode.none:
+        setState(() {
+          isPlaying = false;
+          _rotationController.stop();
+        });
+        break;
+      case PlayMode.sequential:
+        // TODO: Chuyển bài tiếp theo
+        break;
+      case PlayMode.shuffle:
+        // TODO: Chuyển bài ngẫu nhiên
+        break;
+      case PlayMode.repeatOne:
+        setState(() {
+          _position = Duration.zero;
+          currentSliderValue = 0;
+        });
+        break;
+    }
   }
   
   @override
   void dispose() {
-    _pageController.dispose();
+    _audioPlayer.dispose();
     _rotationController.dispose();
     super.dispose();
   }
@@ -71,7 +196,6 @@ class _NowPlayingScreenState extends State<NowPlayingScreen>
             child: Stack(
               alignment: Alignment.center,
               children: [
-                // Outer ring
                 Container(
                   width: 280,
                   height: 280,
@@ -83,30 +207,25 @@ class _NowPlayingScreenState extends State<NowPlayingScreen>
                     ),
                   ),
                 ),
-                // Inner circle (album art)
-                Container(
-                  width: 180,
-                  height: 180,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: Colors.white,
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.2),
-                        blurRadius: 10,
-                        offset: const Offset(0, 5),
-                      ),
-                    ],
-                  ),
-                  child: const Center(
-                    child: Icon(
-                      Icons.music_note,
-                      size: 80,
-                      color: Colors.grey,
-                    ),
-                  ),
+                ClipOval(
+                  child: widget.song.imageUrl != null && widget.song.imageUrl!.isNotEmpty
+                      ? Image.network(
+                          widget.song.imageUrl!,
+                          width: 180,
+                          height: 180,
+                          fit: BoxFit.cover,
+                        )
+                      : Container(
+                          width: 180,
+                          height: 180,
+                          color: Colors.white,
+                          child: const Icon(
+                            Icons.music_note,
+                            size: 80,
+                            color: Colors.grey,
+                          ),
+                        ),
                 ),
-                // Center dot
                 Container(
                   width: 20,
                   height: 20,
@@ -138,7 +257,7 @@ class _NowPlayingScreenState extends State<NowPlayingScreen>
           child: _buildRotatingAlbumArt(),
         ),
         Text(
-          'Tên bài hát',
+          widget.song.title,
           style: GoogleFonts.montserrat(
             color: Colors.white,
             fontSize: 24,
@@ -147,7 +266,7 @@ class _NowPlayingScreenState extends State<NowPlayingScreen>
         ),
         const SizedBox(height: 8),
         Text(
-          'Tên nghệ sĩ',
+          widget.song.artistName,
           style: GoogleFonts.montserrat(
             color: Colors.grey,
             fontSize: 16,
@@ -159,6 +278,13 @@ class _NowPlayingScreenState extends State<NowPlayingScreen>
   }
 
   Widget _buildProgressBar() {
+    String _formatDuration(Duration duration) {
+      String twoDigits(int n) => n.toString().padLeft(2, '0');
+      String minutes = twoDigits(duration.inMinutes.remainder(60));
+      String seconds = twoDigits(duration.inSeconds.remainder(60));
+      return "$minutes:$seconds";
+    }
+
     return Column(
       children: [
         SliderTheme(
@@ -176,10 +302,11 @@ class _NowPlayingScreenState extends State<NowPlayingScreen>
           ),
           child: Slider(
             value: currentSliderValue,
-            max: 100,
+            max: _duration.inSeconds.toDouble(),
             onChanged: (value) {
               setState(() {
                 currentSliderValue = value;
+                _position = Duration(seconds: value.toInt());
               });
             },
           ),
@@ -190,14 +317,14 @@ class _NowPlayingScreenState extends State<NowPlayingScreen>
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                '0:00',
+                _formatDuration(_position),
                 style: GoogleFonts.montserrat(
                   color: Colors.grey,
                   fontSize: 12,
                 ),
               ),
               Text(
-                '3:45',
+                _formatDuration(_duration),
                 style: GoogleFonts.montserrat(
                   color: Colors.grey,
                   fontSize: 12,
@@ -231,15 +358,25 @@ class _NowPlayingScreenState extends State<NowPlayingScreen>
           onPressed: () {},
         ),
         GestureDetector(
-          onTap: () {
+          onTap: () async {
+            if (_currentSong.filePath.isEmpty) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Không có bản preview cho bài hát này')),
+              );
+              return;
+            }
+            
             setState(() {
               isPlaying = !isPlaying;
-              if (isPlaying) {
-                _rotationController.repeat();
-              } else {
-                _rotationController.stop();
-              }
             });
+            
+            if (isPlaying) {
+              await _audioPlayer.play();
+              _rotationController.repeat();
+            } else {
+              await _audioPlayer.pause();
+              _rotationController.stop();
+            }
           },
           child: Container(
             width: 70,
@@ -269,8 +406,29 @@ class _NowPlayingScreenState extends State<NowPlayingScreen>
           onPressed: () {},
         ),
         IconButton(
-          icon: const Icon(Icons.repeat, color: Colors.white, size: 30),
-          onPressed: () {},
+          icon: Icon(
+            _getRepeatIcon(),
+            color: _getRepeatColor(),
+            size: 30,
+          ),
+          onPressed: () {
+            setState(() {
+              switch (_playMode) {
+                case PlayMode.none:
+                  _playMode = PlayMode.sequential;
+                  break;
+                case PlayMode.sequential:
+                  _playMode = PlayMode.shuffle;
+                  break;
+                case PlayMode.shuffle:
+                  _playMode = PlayMode.repeatOne;
+                  break;
+                case PlayMode.repeatOne:
+                  _playMode = PlayMode.none;
+                  break;
+              }
+            });
+          },
         ),
       ],
     );
@@ -334,13 +492,15 @@ class _NowPlayingScreenState extends State<NowPlayingScreen>
                 borderRadius: BorderRadius.circular(16),
               ),
               padding: const EdgeInsets.all(16),
-              child: Center(
+              child: SingleChildScrollView(
                 child: Text(
-                  'Chưa có lời bài hát',
+                  widget.song.lyrics ?? 'Chưa có lời bài hát',
                   style: GoogleFonts.montserrat(
                     color: Colors.white70,
                     fontSize: 16,
+                    height: 1.5,
                   ),
+                  textAlign: TextAlign.center,
                 ),
               ),
             ),
@@ -376,6 +536,25 @@ class _NowPlayingScreenState extends State<NowPlayingScreen>
         ],
       ),
     );
+  }
+
+  IconData _getRepeatIcon() {
+    switch (_playMode) {
+      case PlayMode.none:
+        return Icons.repeat;
+      case PlayMode.sequential:
+        return Icons.repeat;
+      case PlayMode.shuffle:
+        return Icons.shuffle;
+      case PlayMode.repeatOne:
+        return Icons.repeat_one;
+    }
+  }
+
+  Color _getRepeatColor() {
+    return _playMode == PlayMode.none 
+        ? Colors.white 
+        : AppColors.glowColors['blue']!;
   }
 
   @override

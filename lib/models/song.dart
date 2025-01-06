@@ -15,6 +15,7 @@ class Song extends BaseModel {
   late String filePath;
   String? lyrics;
   int? playCount;
+  String? imageUrl;
 
   Song({
     super.id,
@@ -31,6 +32,7 @@ class Song extends BaseModel {
     required this.filePath,
     this.lyrics,
     this.playCount,
+    this.imageUrl,
   });
 
   Song.fromJson(Map<String, dynamic> json) : super.fromJson(json) {
@@ -62,5 +64,37 @@ class Song extends BaseModel {
     data['lyrics'] = lyrics;
     data['playCount'] = playCount;
     return data;
+  }
+
+  Song copyWith({
+    int? id,
+    String? title,
+    String? artistName,
+    int? artistId,
+    String? albumTitle,
+    int? albumId,
+    String? genreName,
+    int? genreId,
+    int? duration,
+    String? filePath,
+    String? imageUrl,
+    String? lyrics,
+    DateTime? createdDate,
+  }) {
+    return Song(
+      id: id ?? this.id,
+      title: title ?? this.title,
+      artistName: artistName ?? this.artistName,
+      artistId: artistId ?? this.artistId,
+      albumTitle: albumTitle ?? this.albumTitle,
+      albumId: albumId ?? this.albumId,
+      genreName: genreName ?? this.genreName,
+      genreId: genreId ?? this.genreId,
+      duration: duration ?? this.duration,
+      filePath: filePath ?? this.filePath,
+      imageUrl: imageUrl ?? this.imageUrl,
+      lyrics: lyrics ?? this.lyrics,
+      createdDate: createdDate ?? this.createdDate,
+    );
   }
 }

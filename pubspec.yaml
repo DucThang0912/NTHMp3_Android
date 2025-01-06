@@ -48,6 +48,8 @@ dependencies:
   provider: ^6.1.1
   glassmorphism: ^3.0.0 
   shared_preferences: ^2.0.8  # lưu token vào local storage
+  audioplayers: ^5.2.1
+  webview_flutter: ^4.4.2
   
 dev_dependencies:
   flutter_test:

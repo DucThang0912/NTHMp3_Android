@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import '../constants/colors.dart';
 import 'now_playing_screen.dart';
+import '../models/album.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 class AlbumScreen extends StatefulWidget {
-  const AlbumScreen({super.key});
+  final Album album;
+  const AlbumScreen({super.key, required this.album});
 
   @override
   State<AlbumScreen> createState() => _AlbumScreenState();
@@ -37,7 +39,6 @@ class _AlbumScreenState extends State<AlbumScreen> {
   Widget _buildHeader() {
     return Stack(
       children: [
-        // Gradient Background
         Container(
           height: 350,
           decoration: BoxDecoration(
@@ -51,7 +52,6 @@ class _AlbumScreenState extends State<AlbumScreen> {
             ),
           ),
         ),
-        // Album Art
         Positioned(
           top: 80,
           left: 20,
@@ -65,25 +65,16 @@ class _AlbumScreenState extends State<AlbumScreen> {
                   width: 180,
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(20),
-                    gradient: LinearGradient(
-                      colors: [
-                        Colors.purple.withOpacity(0.7),
-                        Colors.blue.withOpacity(0.7),
-                      ],
-                    ),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.purple.withOpacity(0.3),
-                        blurRadius: 15,
-                        offset: const Offset(0, 8),
-                      ),
-                    ],
+                    image: widget.album.coverImageUrl != null
+                        ? DecorationImage(
+                            image: NetworkImage(widget.album.coverImageUrl!),
+                            fit: BoxFit.cover,
+                          )
+                        : null,
                   ),
-                  child: const Icon(
-                    Icons.music_note,
-                    color: Colors.white,
-                    size: 80,
-                  ),
+                  child: widget.album.coverImageUrl == null
+                      ? const Icon(Icons.music_note, color: Colors.white, size: 80)
+                      : null,
                 ),
               ),
               const SizedBox(width: 20),
@@ -101,7 +92,7 @@ class _AlbumScreenState extends State<AlbumScreen> {
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      'Tên Album',
+                      widget.album.title ?? 'Unknown Album',
                       style: GoogleFonts.montserrat(
                         color: Colors.white,
                         fontSize: 24,
@@ -110,15 +101,7 @@ class _AlbumScreenState extends State<AlbumScreen> {
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      'Nghệ sĩ • 2024',
-                      style: GoogleFonts.montserrat(
-                        color: Colors.white.withOpacity(0.7),
-                        fontSize: 14,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      '12 bài hát • 45 phút',
+                      widget.album.artist?.name ?? 'Unknown Artist',
                       style: GoogleFonts.montserrat(
                         color: Colors.white.withOpacity(0.7),
                         fontSize: 14,
@@ -172,8 +155,9 @@ class _AlbumScreenState extends State<AlbumScreen> {
     return ListView.builder(
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
-      itemCount: 12,
+      itemCount: widget.album.songs?.length ?? 0,
       itemBuilder: (context, index) {
+        final song = widget.album.songs![index];
         return ListTile(
           contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
           leading: Container(
@@ -194,44 +178,34 @@ class _AlbumScreenState extends State<AlbumScreen> {
             ),
           ),
           title: Text(
-            'Tên bài hát ${index + 1}',
+            song.title,
             style: GoogleFonts.montserrat(
               color: Colors.white,
               fontWeight: FontWeight.w500,
             ),
           ),
-          subtitle: Row(
-            children: [
-              const Icon(Icons.headphones, color: Colors.grey, size: 14),
-              const SizedBox(width: 4),
-              Text(
-                '${(index + 1) * 100}K',
-                style: GoogleFonts.montserrat(color: Colors.grey, fontSize: 12),
-              ),
-            ],
+          subtitle: Text(
+            song.artistName,
+            style: GoogleFonts.montserrat(
+              color: Colors.grey,
+              fontSize: 12,
+            ),
           ),
-          trailing: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                '3:45',
-                style: GoogleFonts.montserrat(
-                  color: Colors.grey,
-                  fontSize: 12,
-                ),
-              ),
-              const SizedBox(width: 16),
-              const Icon(Icons.more_vert, color: Colors.grey),
-            ],
+          trailing: Text(
+            '${song.duration ~/ 60}:${(song.duration % 60).toString().padLeft(2, '0')}',
+            style: GoogleFonts.montserrat(
+              color: Colors.grey,
+              fontSize: 12,
+            ),
           ),
-          // onTap: () {
-          //   Navigator.push(
-          //     context,
-          //     MaterialPageRoute(
-          //       builder: (context) => const NowPlayingScreen(),
-          //     ),
-          //   );
-          // },
+          onTap: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => NowPlayingScreen(song: song),
+              ),
+            );
+          },
         );
       },
     );
@@ -311,30 +285,15 @@ class _AlbumScreenState extends State<AlbumScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.background,
-      body: Stack(
-        children: [
-          CustomScrollView(
-            controller: _scrollController,
-            slivers: [
-              SliverToBoxAdapter(
-                child: Column(
-                  children: [
-                    _buildHeader(),
-                    const SizedBox(height: 20),
-                    _buildSongList(),
-                    const SizedBox(height: 100), // Space for floating controls
-                  ],
-                ),
-              ),
-            ],
-          ),
-          Positioned(
-            left: 0,
-            right: 0,
-            bottom: 0,
-            child: _buildFloatingControls(),
-          ),
-        ],
+      body: SingleChildScrollView(
+        controller: _scrollController,
+        child: Column(
+          children: [
+            _buildHeader(),
+            const SizedBox(height: 20),
+            _buildSongList(),
+          ],
+        ),
       ),
     );
   }

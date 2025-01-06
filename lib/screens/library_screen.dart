@@ -1,11 +1,10 @@
 import 'package:flutter/material.dart';
 import '../constants/colors.dart';
+import '../models/album.dart';
+import '../models/artist.dart';
 import '../screens/playlist_screen.dart';
-import '../screens/artist_screen.dart';
-import '../screens/now_playing_screen.dart';
 import '../screens/album_screen.dart';
 import '../widgets/main_screen_bottom_nav.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'dart:math';
 
 class LibraryScreen extends StatefulWidget {
@@ -53,14 +52,14 @@ class _LibraryScreenState extends State<LibraryScreen> with SingleTickerProvider
       ),
       body: TabBarView(
         controller: _tabController,
-        children: [
+        children: [ 
           _PlaylistTab(),
           _SongsTab(),
           _AlbumsTab(),
           _ArtistsTab(),
         ],
       ),
-      bottomNavigationBar: const MainScreenBottomNav(selectedIndex: 3),
+      bottomNavigationBar: const MainScreenBottomNav(selectedIndex: 2),
     );
   }
 }
@@ -252,7 +251,16 @@ class _AlbumsTab extends StatelessWidget {
             Navigator.push(
               context,
               MaterialPageRoute(
-                builder: (context) => const AlbumScreen(),
+                builder: (context) => AlbumScreen(
+                  album: Album(
+                    id: 0,
+                    title: 'Sample Album',
+                    artist: Artist(
+                      id: '0',
+                      name: 'Sample Artist'
+                    ),
+                  ),
+                ),
               ),
             );
           },
