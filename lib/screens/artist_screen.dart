@@ -30,6 +30,8 @@ class _ArtistScreenState extends State<ArtistScreen> {
   }
 
   Future<void> _loadArtistDetails() async {
+    if (!mounted) return;
+    
     try {
       final spotifyProvider = Provider.of<SpotifyProvider>(context, listen: false);
       final artist = await spotifyProvider.spotifyService.getArtistDetails(widget.artistId);
@@ -211,7 +213,11 @@ class _ArtistScreenState extends State<ArtistScreen> {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (context) => NowPlayingScreen(song: song),
+                          builder: (context) => NowPlayingScreen(
+                            song: song,
+                            playlist: _artist?.songs ?? [],
+                            currentIndex: _artist?.songs?.indexOf(song) ?? 0,
+                          ),
                         ),
                       );
                     },

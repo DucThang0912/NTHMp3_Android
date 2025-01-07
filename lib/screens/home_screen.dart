@@ -495,8 +495,11 @@ class _RecentlyPlayedState extends State<_RecentlyPlayed> {
               padding: const EdgeInsets.symmetric(horizontal: 16),
               itemCount: recentSongs.length,
               itemBuilder: (context, index) {
-                final song = recentSongs[index];
-                return _RecentlyPlayedItem(song: song);
+                return _RecentlyPlayedItem(
+                  song: recentSongs[index],
+                  playlist: recentSongs,
+                  index: index,
+                );
               },
             ),
           ),
@@ -507,8 +510,14 @@ class _RecentlyPlayedState extends State<_RecentlyPlayed> {
 
 class _RecentlyPlayedItem extends StatelessWidget {
   final Song song;
+  final List<Song> playlist;
+  final int index;
   
-  const _RecentlyPlayedItem({required this.song});
+  const _RecentlyPlayedItem({
+    required this.song,
+    required this.playlist,
+    required this.index,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -517,7 +526,11 @@ class _RecentlyPlayedItem extends StatelessWidget {
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (context) => NowPlayingScreen(song: song),
+            builder: (context) => NowPlayingScreen(
+              song: song,
+              playlist: playlist,
+              currentIndex: index,
+            ),
           ),
         );
       },
@@ -647,7 +660,11 @@ class _TopTrendingState extends State<_TopTrending> {
               padding: const EdgeInsets.symmetric(horizontal: 16),
               itemCount: trendingSongs.length,
               itemBuilder: (context, index) {
-                return _TopTrendingItem(song: trendingSongs[index]);
+                return _TopTrendingItem(
+                  song: trendingSongs[index],
+                  playlist: trendingSongs,
+                  index: index,
+                );
               },
             ),
           ),
@@ -658,7 +675,14 @@ class _TopTrendingState extends State<_TopTrending> {
 
 class _TopTrendingItem extends StatelessWidget {
   final Song song;
-  const _TopTrendingItem({required this.song});
+  final List<Song> playlist;
+  final int index;
+  
+  const _TopTrendingItem({
+    required this.song,
+    required this.playlist,
+    required this.index,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -667,7 +691,11 @@ class _TopTrendingItem extends StatelessWidget {
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (context) => NowPlayingScreen(song: song),
+            builder: (context) => NowPlayingScreen(
+              song: song,
+              playlist: playlist,
+              currentIndex: index,
+            ),
           ),
         );
       },
@@ -845,70 +873,22 @@ class _NewReleasesState extends State<_NewReleases> with SingleTickerProviderSta
       itemCount: songs.length,
       itemBuilder: (context, index) {
         final song = songs[index];
-        return Container(
-          margin: const EdgeInsets.only(bottom: 8),
-          decoration: BoxDecoration(
-            color: AppColors.surface.withOpacity(0.5),
-            borderRadius: BorderRadius.circular(8),
-          ),
-          child: ListTile(
-            onTap: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => NowPlayingScreen(song: song),
+        return GestureDetector(
+          onTap: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => NowPlayingScreen(
+                  song: song,
+                  playlist: songs,
+                  currentIndex: index,
                 ),
-              );
-            },
-            leading: ClipRRect(
-              borderRadius: BorderRadius.circular(4),
-              child: song.imageUrl != null && song.imageUrl!.isNotEmpty
-                  ? Image.network(
-                      song.imageUrl!,
-                      width: 48,
-                      height: 48,
-                      fit: BoxFit.cover,
-                    )
-                  : Container(
-                      width: 48,
-                      height: 48,
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                          colors: [
-                            Colors.purple.withOpacity(0.7),
-                            Colors.blue.withOpacity(0.7),
-                          ],
-                        ),
-                      ),
-                      child: const Icon(Icons.music_note, color: Colors.white, size: 24),
-                    ),
-            ),
-            title: Text(
-              song.title,
-              style: const TextStyle(
-                color: Colors.white,
-                fontWeight: FontWeight.w500,
               ),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-            ),
-            subtitle: Text(
-              song.artistName,
-              style: TextStyle(
-                color: Colors.grey[400],
-              ),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-            ),
-            trailing: Text(
-              _formatDate(song.createdDate!),
-              style: TextStyle(
-                color: Colors.grey[400],
-                fontSize: 12,
-              ),
-            ),
+            );
+          },
+          child: _NewReleasesItem(
+            song: song,
+            playlist: songs,
           ),
         );
       },
@@ -940,76 +920,82 @@ class _NewReleasesState extends State<_NewReleases> with SingleTickerProviderSta
       itemCount: songs.length,
       itemBuilder: (context, index) {
         final song = songs[index];
-        return Container(
-          margin: const EdgeInsets.only(bottom: 8),
-          decoration: BoxDecoration(
-            color: AppColors.surface.withOpacity(0.5),
-            borderRadius: BorderRadius.circular(8),
-          ),
-          child: ListTile(
-            leading: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Container(
-                  width: 35,
-                  alignment: Alignment.center,
-                  child: Text(
-                    '#${index + 1}',
-                    style: TextStyle(
-                      color: index < 3 ? Colors.purple : Colors.grey[400],
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
+        return GestureDetector(
+          onTap: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => NowPlayingScreen(
+                  song: song,
+                  playlist: songs,
+                  currentIndex: index,
+                ),
+              ),
+            );
+          },
+          child: Container(
+            margin: const EdgeInsets.only(bottom: 8),
+            decoration: BoxDecoration(
+              color: AppColors.surface.withOpacity(0.5),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: ListTile(
+              leading: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(
+                    width: 35,
+                    alignment: Alignment.center,
+                    child: Text(
+                      '#${index + 1}',
+                      style: TextStyle(
+                        color: index < 3 ? Colors.purple : Colors.grey[400],
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                   ),
-                ),
-                const SizedBox(width: 8),
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(4),
-                  child: song.imageUrl != null && song.imageUrl!.isNotEmpty
-                      ? Image.network(
-                          song.imageUrl!,
-                          width: 48,
-                          height: 48,
-                          fit: BoxFit.cover,
-                        )
-                      : Container(
-                          width: 48,
-                          height: 48,
-                          decoration: BoxDecoration(
-                            gradient: LinearGradient(
-                              begin: Alignment.topLeft,
-                              end: Alignment.bottomRight,
-                              colors: [
-                                Colors.purple.withOpacity(0.7),
-                                Colors.blue.withOpacity(0.7),
-                              ],
+                  const SizedBox(width: 8),
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(4),
+                    child: song.imageUrl != null && song.imageUrl!.isNotEmpty
+                        ? Image.network(
+                            song.imageUrl!,
+                            width: 48,
+                            height: 48,
+                            fit: BoxFit.cover,
+                          )
+                        : Container(
+                            width: 48,
+                            height: 48,
+                            decoration: BoxDecoration(
+                              gradient: LinearGradient(
+                                begin: Alignment.topLeft,
+                                end: Alignment.bottomRight,
+                                colors: [
+                                  Colors.purple.withOpacity(0.7),
+                                  Colors.blue.withOpacity(0.7),
+                                ],
+                              ),
                             ),
+                            child: const Icon(Icons.music_note, color: Colors.white),
                           ),
-                          child: const Icon(Icons.music_note, color: Colors.white),
-                        ),
-                ),
-              ],
+                  ),
+                ],
+              ),
+              title: Text(
+                song.title,
+                style: const TextStyle(color: Colors.white),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+              subtitle: Text(
+                song.artistName,
+                style: TextStyle(color: Colors.grey[400]),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
             ),
-            title: Text(
-              song.title,
-              style: const TextStyle(color: Colors.white),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-            ),
-            subtitle: Text(
-              song.artistName,
-              style: TextStyle(color: Colors.grey[400]),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-            ),
-            onTap: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => NowPlayingScreen(song: song),
-                ),
-              );
-            },
           ),
         );
       },
@@ -1020,13 +1006,12 @@ class _NewReleasesState extends State<_NewReleases> with SingleTickerProviderSta
     if (isLoading) {
       return const Center(child: CircularProgressIndicator());
     }
-
     return ListView.builder(
       padding: const EdgeInsets.all(16),
       itemCount: vPopSongs.length,
       itemBuilder: (context, index) {
         final song = vPopSongs[index];
-        return _buildSongListItem(song);
+        return _buildSongListItem(song, playlist: vPopSongs);
       },
     );
   }
@@ -1035,18 +1020,20 @@ class _NewReleasesState extends State<_NewReleases> with SingleTickerProviderSta
     if (isLoading) {
       return const Center(child: CircularProgressIndicator());
     }
-
     return ListView.builder(
       padding: const EdgeInsets.all(16),
       itemCount: kPopSongs.length,
       itemBuilder: (context, index) {
         final song = kPopSongs[index];
-        return _buildSongListItem(song);
+        return _buildSongListItem(song, playlist: kPopSongs);
       },
     );
   }
 
-  Widget _buildSongListItem(Song song) {
+  Widget _buildSongListItem(Song song, {
+    required List<Song> playlist, 
+    Widget? leading,
+  }) {
     return Container(
       margin: const EdgeInsets.only(bottom: 8),
       decoration: BoxDecoration(
@@ -1054,7 +1041,7 @@ class _NewReleasesState extends State<_NewReleases> with SingleTickerProviderSta
         borderRadius: BorderRadius.circular(8),
       ),
       child: ListTile(
-        leading: ClipRRect(
+        leading: leading ?? ClipRRect(
           borderRadius: BorderRadius.circular(4),
           child: song.imageUrl != null && song.imageUrl!.isNotEmpty
               ? Image.network(
@@ -1076,7 +1063,7 @@ class _NewReleasesState extends State<_NewReleases> with SingleTickerProviderSta
                       ],
                     ),
                   ),
-                  child: const Icon(Icons.music_note, color: Colors.white, size: 24),
+                  child: const Icon(Icons.music_note, color: Colors.white),
                 ),
         ),
         title: Text(
@@ -1095,7 +1082,11 @@ class _NewReleasesState extends State<_NewReleases> with SingleTickerProviderSta
           Navigator.push(
             context,
             MaterialPageRoute(
-              builder: (context) => NowPlayingScreen(song: song),
+              builder: (context) => NowPlayingScreen(
+                song: song,
+                playlist: playlist,
+                currentIndex: playlist.indexOf(song),
+              ),
             ),
           );
         },
@@ -1133,55 +1124,74 @@ class _TopGridItem extends StatelessWidget {
 
 class _NewReleasesItem extends StatelessWidget {
   final Song? song;
-  const _NewReleasesItem({this.song});
+  final List<Song> playlist;
+  
+  const _NewReleasesItem({
+    this.song, 
+    required this.playlist,
+  });
 
   @override
   Widget build(BuildContext context) {
-    return ListTile(
-      leading: ClipRRect(
+    return Container(
+      margin: const EdgeInsets.only(bottom: 8),
+      decoration: BoxDecoration(
+        color: AppColors.surface.withOpacity(0.5),
         borderRadius: BorderRadius.circular(8),
-        child: Container(
-          height: 60,
-          width: 60,
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [
-                Colors.purple.withOpacity(0.7),
-                Colors.blue.withOpacity(0.7),
-              ],
-            ),
-          ),
-          child: const Center(
-            child: Icon(
-              Icons.music_note,
-              color: Colors.white,
-              size: 30,
-            ),
-          ),
-        ),
       ),
-      title: Text(
-        song?.title ?? 'Chưa có tên bài hát',
-        style: const TextStyle(color: Colors.white),
-        maxLines: 1,
-        overflow: TextOverflow.ellipsis,
-      ),
-      subtitle: Text(
-        song?.artistName ?? 'Chưa có tên nghệ sĩ',
-        style: const TextStyle(color: Colors.grey),
-      ),
-      onTap: song != null
-          ? () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => NowPlayingScreen(song: song!),
+      child: ListTile(
+        leading: ClipRRect(
+          borderRadius: BorderRadius.circular(8),
+          child: song?.imageUrl != null && song!.imageUrl!.isNotEmpty
+              ? Image.network(
+                  song!.imageUrl!,
+                  width: 48,
+                  height: 48,
+                  fit: BoxFit.cover,
+                )
+              : Container(
+                  width: 48,
+                  height: 48,
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: [
+                        Colors.purple.withOpacity(0.7),
+                        Colors.blue.withOpacity(0.7),
+                      ],
+                    ),
+                  ),
+                  child: const Icon(Icons.music_note, color: Colors.white),
                 ),
-              );
-            }
-          : null,
+        ),
+        title: Text(
+          song?.title ?? '',
+          style: const TextStyle(color: Colors.white),
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+        ),
+        subtitle: Text(
+          song?.artistName ?? '',
+          style: TextStyle(color: Colors.grey[400]),
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+        ),
+        onTap: () {
+          if (song != null) {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => NowPlayingScreen(
+                  song: song!,
+                  playlist: playlist,
+                  currentIndex: playlist.indexOf(song!),
+                ),
+              ),
+            );
+          }
+        },
+      ),
     );
   }
 }

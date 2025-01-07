@@ -356,13 +356,24 @@ class _SearchScreenState extends State<SearchScreen> with SingleTickerProviderSt
             Navigator.push(
               context,
               MaterialPageRoute(
-                builder: (context) => NowPlayingScreen(song: song),
+                builder: (context) => NowPlayingScreen(
+                  song: song,
+                  playlist: _searchResults,
+                  currentIndex: _searchResults.indexOf(song),
+                ),
               ),
             );
           },
         );
       },
     );
+  }
+
+  @override
+  void dispose() {
+    _animationController.dispose();
+    _searchController.dispose();
+    super.dispose();
   }
 
   @override

@@ -202,7 +202,11 @@ class _AlbumScreenState extends State<AlbumScreen> {
             Navigator.push(
               context,
               MaterialPageRoute(
-                builder: (context) => NowPlayingScreen(song: song),
+                builder: (context) => NowPlayingScreen(
+                  song: song,
+                  playlist: widget.album.songs ?? [],
+                  currentIndex: widget.album.songs?.indexOf(song) ?? 0,
+                ),
               ),
             );
           },

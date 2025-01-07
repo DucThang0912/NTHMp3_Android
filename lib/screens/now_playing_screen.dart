@@ -7,6 +7,7 @@ import 'package:just_audio/just_audio.dart';
 import 'package:provider/provider.dart';
 import '../providers/spotify_provider.dart';
 import '../services/spotify_service.dart';
+import 'dart:math';
 
 enum PlayMode {
   none,        // Phát một lần rồi dừng
@@ -17,10 +18,14 @@ enum PlayMode {
 
 class NowPlayingScreen extends StatefulWidget {
   final Song song;
+  final List<Song> playlist;
+  final int currentIndex;
   
   const NowPlayingScreen({
     super.key,
     required this.song,
+    required this.playlist,
+    required this.currentIndex,
   });
 
   @override
@@ -30,7 +35,7 @@ class NowPlayingScreen extends StatefulWidget {
 class _NowPlayingScreenState extends State<NowPlayingScreen> 
     with SingleTickerProviderStateMixin {
   final AudioPlayer _audioPlayer = AudioPlayer();
-  final PageController _pageController = PageController();
+  late PageController _pageController;
   Duration _duration = Duration.zero;
   Duration _position = Duration.zero;
   bool isPlaying = false;
@@ -42,16 +47,21 @@ class _NowPlayingScreenState extends State<NowPlayingScreen>
   late Song _currentSong;
   late SpotifyService _spotifyService;
   bool _initialized = false;
+  late List<Song> _playlist;
+  late int _currentIndex;
   
   @override
   void initState() {
     super.initState();
+    _playlist = widget.playlist;
+    _currentIndex = widget.currentIndex;
+    _currentSong = _playlist[_currentIndex];
+    _pageController = PageController(initialPage: 1);
     _rotationController = AnimationController(
       duration: const Duration(seconds: 10),
       vsync: this,
     );
     
-    _currentSong = widget.song;
     _setupAudioPlayer();
   }
 
@@ -89,11 +99,13 @@ class _NowPlayingScreenState extends State<NowPlayingScreen>
 
   Future<void> _initializeAudio() async {
     try {
-      // Đảm bảo dừng bài hát đang phát (nếu có)
+      // Dừng bài đang phát
       await _spotifyService.pauseTrack();
       await Future.delayed(Duration(milliseconds: 500));
       
+      print('Playing song: ${_currentSong.title} with ID: ${_currentSong.spotifyId}');
       await _spotifyService.playSpotifyTrack(_currentSong.spotifyId);
+      
       setState(() {
         isPlaying = true;
         _position = Duration.zero;
@@ -102,15 +114,14 @@ class _NowPlayingScreenState extends State<NowPlayingScreen>
         _rotationController.repeat();
       });
     } catch (e) {
-      print('Error playing: $e');
+      print('Error initializing audio: $e');
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Không thể phát bài hát này')),
+        SnackBar(content: Text('Không thể phát bài hát này: ${e.toString()}')),
       );
     }
   }
 
   void _setupAudioPlayer() {
-    // Lắng nghe thời lượng bài hát từ Spotify
     Timer.periodic(const Duration(milliseconds: 500), (timer) {
       if (!mounted) {
         timer.cancel();
@@ -121,17 +132,28 @@ class _NowPlayingScreenState extends State<NowPlayingScreen>
         setState(() {
           _position = _position + const Duration(milliseconds: 500);
           currentSliderValue = _position.inSeconds.toDouble();
+          
+          // Kiểm tra nếu bài hát đã kết thúc
+          if (_position >= _duration) {
+            _spotifyService.pauseTrack(); // Pause trước
+            isPlaying = false;
+            _rotationController.stop();
+            Future.delayed(Duration(milliseconds: 500), () {
+              if (mounted) {
+                _handleSongEnd();
+              }
+            });
+          }
         });
       }
     });
 
-    // Cập nhật duration khi bài hát được load
     setState(() {
       _duration = Duration(seconds: _currentSong.duration);
     });
   }
 
-  void _handleSongEnd() {
+  void _handleSongEnd() async {
     switch (_playMode) {
       case PlayMode.none:
         setState(() {
@@ -139,17 +161,35 @@ class _NowPlayingScreenState extends State<NowPlayingScreen>
           _rotationController.stop();
         });
         break;
+      
       case PlayMode.sequential:
-        // TODO: Chuyển bài tiếp theo
+        if (_currentIndex < _playlist.length - 1) {
+          _currentIndex++;
+          setState(() {
+            _currentSong = _playlist[_currentIndex];
+          });
+          await Future.delayed(Duration(milliseconds: 500));
+          await _initializeAudio();
+        }
         break;
+      
       case PlayMode.shuffle:
-        // TODO: Chuyển bài ngẫu nhiên
+        final random = Random();
+        _currentIndex = random.nextInt(_playlist.length);
+        setState(() {
+          _currentSong = _playlist[_currentIndex];
+        });
+        await Future.delayed(Duration(milliseconds: 500));
+        await _initializeAudio();
         break;
+      
       case PlayMode.repeatOne:
         setState(() {
           _position = Duration.zero;
           currentSliderValue = 0;
         });
+        await Future.delayed(Duration(milliseconds: 500));
+        await _initializeAudio();
         break;
     }
   }
@@ -216,9 +256,9 @@ class _NowPlayingScreenState extends State<NowPlayingScreen>
                   ),
                 ),
                 ClipOval(
-                  child: widget.song.imageUrl != null && widget.song.imageUrl!.isNotEmpty
+                  child: _currentSong.imageUrl != null && _currentSong.imageUrl!.isNotEmpty
                       ? Image.network(
-                          widget.song.imageUrl!,
+                          _currentSong.imageUrl!,
                           width: 180,
                           height: 180,
                           fit: BoxFit.cover,
@@ -265,7 +305,7 @@ class _NowPlayingScreenState extends State<NowPlayingScreen>
           child: _buildRotatingAlbumArt(),
         ),
         Text(
-          widget.song.title,
+          _currentSong.title,
           style: GoogleFonts.montserrat(
             color: Colors.white,
             fontSize: 24,
@@ -274,7 +314,7 @@ class _NowPlayingScreenState extends State<NowPlayingScreen>
         ),
         const SizedBox(height: 8),
         Text(
-          widget.song.artistName,
+          _currentSong.artistName,
           style: GoogleFonts.montserrat(
             color: Colors.grey,
             fontSize: 16,
@@ -365,8 +405,8 @@ class _NowPlayingScreenState extends State<NowPlayingScreen>
           },
         ),
         IconButton(
-          icon: const Icon(Icons.skip_previous, color: Colors.white, size: 35),
-          onPressed: () {},
+          icon: const Icon(Icons.skip_previous),
+          onPressed: _playPrevious,
         ),
         GestureDetector(
           onTap: _togglePlayPause,
@@ -394,8 +434,8 @@ class _NowPlayingScreenState extends State<NowPlayingScreen>
           ),
         ),
         IconButton(
-          icon: const Icon(Icons.skip_next, color: Colors.white, size: 35),
-          onPressed: () {},
+          icon: const Icon(Icons.skip_next),
+          onPressed: _playNext,
         ),
         IconButton(
           icon: Icon(
@@ -569,6 +609,83 @@ class _NowPlayingScreenState extends State<NowPlayingScreen>
     }
   }
 
+  Future<void> _playNext() async {
+    if (_currentIndex < _playlist.length - 1) {
+      _currentIndex++;
+      setState(() {
+        _currentSong = _playlist[_currentIndex];
+      });
+      await _initializeAudio();
+    }
+  }
+
+  Future<void> _playPrevious() async {
+    if (_currentIndex > 0) {
+      _currentIndex--;
+      setState(() {
+        _currentSong = _playlist[_currentIndex];
+      });
+      await _initializeAudio();
+    }
+  }
+
+  Widget _buildPlaylistView() {
+    return ListView.builder(
+      padding: const EdgeInsets.fromLTRB(24, 24, 24, 200),
+      itemCount: _playlist.length,
+      itemBuilder: (context, index) {
+        final song = _playlist[index];
+        final isPlaying = index == _currentIndex;
+        
+        return Container(
+          margin: const EdgeInsets.only(bottom: 12),
+          decoration: BoxDecoration(
+            color: isPlaying ? Colors.purple.withOpacity(0.3) : Colors.transparent,
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: ListTile(
+            leading: ClipRRect(
+              borderRadius: BorderRadius.circular(4),
+              child: song.imageUrl != null && song.imageUrl!.isNotEmpty
+                  ? Image.network(
+                      song.imageUrl!,
+                      width: 48,
+                      height: 48,
+                      fit: BoxFit.cover,
+                    )
+                  : Container(
+                      width: 48,
+                      height: 48,
+                      color: Colors.grey[800],
+                      child: const Icon(Icons.music_note, color: Colors.white),
+                    ),
+            ),
+            title: Text(
+              song.title,
+              style: TextStyle(
+                color: isPlaying ? Colors.purple : Colors.white,
+                fontWeight: isPlaying ? FontWeight.bold : FontWeight.normal,
+              ),
+            ),
+            subtitle: Text(
+              song.artistName,
+              style: TextStyle(
+                color: isPlaying ? Colors.purple.withOpacity(0.7) : Colors.grey,
+              ),
+            ),
+            onTap: () {
+              setState(() {
+                _currentIndex = index;
+                _currentSong = _playlist[index];
+              });
+              _initializeAudio();
+            },
+          ),
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -583,14 +700,17 @@ class _NowPlayingScreenState extends State<NowPlayingScreen>
                   PageView(
                     controller: _pageController,
                     children: [
-                      // Trang 1: Album art
+                      // Trang 1: Danh sách phát
+                      _buildPlaylistView(),
+                      
+                      // Trang 2: Album art
                       Column(
                         children: [
                           _buildMusicInfo(),
                         ],
                       ),
                       
-                      // Trang 2: Lyrics
+                      // Trang 3: Lyrics
                       _buildLyricsView(),
                     ],
                   ),
@@ -599,17 +719,23 @@ class _NowPlayingScreenState extends State<NowPlayingScreen>
                   AnimatedBuilder(
                     animation: _pageController,
                     builder: (context, child) {
-                      final page = _pageController.page ?? 0;
-                      // Điều chỉnh vị trí ban đầu và khoảng cách di chuyển
-                      final topPadding = MediaQuery.of(context).size.height * 0.55; // Tăng lên để không che text
-                      final bottomPadding = MediaQuery.of(context).size.height * 0.65; // Giảm xuống để không vượt quá màn hình
-                      final top = topPadding + (bottomPadding - topPadding) * page;
+                      final page = _pageController.page ?? 1;
+                      final distance = (page - 1).abs(); // Khoảng cách so với trang giữa
+                      
+                      // Vị trí cao nhất khi ở trang giữa
+                      final topPosition = MediaQuery.of(context).size.height * 0.50;
+                      // Vị trí thấp nhất khi ở trang bên
+                      final bottomPosition = MediaQuery.of(context).size.height * 0.65;
+                      
+                      // Tính toán vị trí dựa trên khoảng cách
+                      final top = topPosition + (bottomPosition - topPosition) * distance;
                       
                       return Positioned(
                         left: 0,
                         right: 0,
                         top: top,
                         child: Container(
+                          padding: const EdgeInsets.symmetric(vertical: 32),
                           color: AppColors.background,
                           child: Column(
                             mainAxisSize: MainAxisSize.min,
@@ -618,8 +744,9 @@ class _NowPlayingScreenState extends State<NowPlayingScreen>
                                 padding: const EdgeInsets.symmetric(horizontal: 24),
                                 child: _buildProgressBar(),
                               ),
-                              const SizedBox(height: 20),
+                              const SizedBox(height: 32),
                               _buildControls(),
+                              const SizedBox(height: 32),
                             ],
                           ),
                         ),

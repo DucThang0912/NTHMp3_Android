@@ -19,6 +19,7 @@ class SpotifyService {
     required this.clientSecret,
   }) {
     _getAccessToken();
+    _initSpotifySDK();
   }
 
   Future<void> _initSpotifySDK() async {
@@ -38,8 +39,12 @@ class SpotifyService {
 
   Future<void> playSpotifyTrack(String spotifyId) async {
     try {
-      await platform.invokeMethod('connectSpotify');
-      await Future.delayed(Duration(milliseconds: 1000)); // Đợi kết nối
+      // Kiểm tra và đảm bảo kết nối
+      final isConnected = await platform.invokeMethod<bool>('isSpotifyConnected') ?? false;
+      if (!isConnected) {
+        await _initSpotifySDK();
+        await Future.delayed(Duration(seconds: 1)); // Đợi kết nối ổn định
+      }
       
       final uri = 'spotify:track:$spotifyId';
       print('Playing track with URI: $uri');
@@ -145,7 +150,7 @@ class SpotifyService {
         genreName: 'New Release',
         genreId: 0,
         duration: 0,
-        filePath: 'https://open.spotify.com/embed/album/${album['id']}',
+        filePath: 'spotify:album:${album['id']}',
         imageUrl: album['images']?.isNotEmpty == true ? album['images'][0]['url'] : '',
         createdDate: DateTime.parse(album['release_date']),
       )).toList();
