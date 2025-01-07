@@ -1,14 +1,20 @@
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import 'dart:io';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class ApiService {
   static String get baseUrl {
-    const bool isPhysicalDevice = bool.fromEnvironment('PHYSICAL_DEVICE');
-    if (isPhysicalDevice) {
-      return 'http://192.168.1.104:8080/api'; 
+    if (Platform.isAndroid) {
+      // Nếu đang chạy trên Android Emulator
+      if (Platform.environment.containsKey('ANDROID_EMU')) {
+        return 'http://10.0.2.2:8080/api';
+      }
+      // Nếu đang chạy trên thiết bị thật
+      return 'http://192.168.1.104:8080/api';
     }
-    return 'http://10.0.2.2:8080/api'; // Địa chỉ cho máy ảo
+    // Cho các platform khác
+    return 'http://localhost:8080/api';
   }
 
   Future<Map<String, String>> _getHeaders() async {
