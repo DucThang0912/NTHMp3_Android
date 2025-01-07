@@ -8,6 +8,11 @@ import 'screens/home_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  
+  // Kiểm tra thiết bị thật hay ảo
+  const isPhysicalDevice = bool.fromEnvironment('PHYSICAL_DEVICE');
+  print('Running on ${isPhysicalDevice ? 'physical' : 'emulator'} device');
+  
   final prefs = await SharedPreferences.getInstance();
   final authService = AuthService(prefs);
 

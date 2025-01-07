@@ -3,7 +3,13 @@ import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class ApiService {
-  static const String baseUrl = 'http://10.0.2.2:8080/api';
+  static String get baseUrl {
+    const bool isPhysicalDevice = bool.fromEnvironment('PHYSICAL_DEVICE');
+    if (isPhysicalDevice) {
+      return 'http://192.168.1.104:8080/api'; 
+    }
+    return 'http://10.0.2.2:8080/api'; // Địa chỉ cho máy ảo
+  }
 
   Future<Map<String, String>> _getHeaders() async {
     final prefs = await SharedPreferences.getInstance();
