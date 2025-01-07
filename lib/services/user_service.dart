@@ -18,6 +18,12 @@ class UserService {
     return User.fromJson(response);
   }
 
+  // Lấy tất cả người dùng
+  Future<List<User>> getAllUsers() async {
+    final response = await _apiService.get('users/list');
+    return (response as List).map((user) => User.fromJson(user)).toList();
+  }
+
   // Cập nhật thông tin người dùng
   Future<void> updateProfile(User user) async {
     final response =
@@ -33,5 +39,10 @@ class UserService {
       'oldPassword': oldPassword,
       'newPassword': newPassword,
     });
+  }
+
+  // Thêm người dùng
+  Future<void> addUser(User user) async {
+    await _apiService.post('users', user.toJson());
   }
 }

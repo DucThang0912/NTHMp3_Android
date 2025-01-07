@@ -1,4 +1,6 @@
 import 'dart:convert';
+import 'package:nthmusicmp3/models/song.dart';
+
 import 'base_model.dart';
 import 'user.dart';
 
@@ -7,6 +9,9 @@ class Playlist extends BaseModel {
   String? description;
   bool? isPublic;
   dynamic user;
+  String? imageUrl;
+  List<Song>? songs;
+  String? username;
 
   Playlist({
     super.id,
@@ -16,6 +21,9 @@ class Playlist extends BaseModel {
     this.description,
     this.isPublic,
     this.user,
+    this.imageUrl,
+    this.songs,
+    this.username,
   });
 
   Playlist.fromJson(Map<String, dynamic> json) : super.fromJson(json) {
@@ -23,6 +31,11 @@ class Playlist extends BaseModel {
     description = _decodeUtf8(json['description']);
     isPublic = json['public'];
     user = json['user'];
+    imageUrl = json['imageUrl'];
+    songs = json['songs'] != null
+        ? (json['songs'] as List).map((s) => Song.fromJson(s)).toList()
+        : null;
+    username = json['username'];
   }
 
   String? _decodeUtf8(dynamic text) {
@@ -41,6 +54,9 @@ class Playlist extends BaseModel {
     data['description'] = description;
     data['public'] = isPublic;
     data['user'] = user;
+    data['imageUrl'] = imageUrl;
+    data['songs'] = songs;
+    data['username'] = username;
     return data;
   }
 }

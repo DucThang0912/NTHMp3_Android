@@ -54,6 +54,8 @@ class _NowPlayingScreenState extends State<NowPlayingScreen>
   late List<Song> _playlist;
   late int _currentIndex;
   final PlayHistoryService _playHistoryService = PlayHistoryService();
+  Timer? _sleepTimer;
+  int? _sleepMinutes;
 
   @override
   void initState() {
@@ -208,6 +210,7 @@ class _NowPlayingScreenState extends State<NowPlayingScreen>
 
   @override
   void dispose() {
+    _sleepTimer?.cancel();
     _pageController.dispose();
     _audioPlayer.dispose();
     _stopPlayback();
@@ -527,6 +530,8 @@ class _NowPlayingScreenState extends State<NowPlayingScreen>
               );
             } else if (icon == Icons.playlist_add) {
               _showAddToPlaylistBottomSheet();
+            } else if (icon == Icons.timer) {
+              _showTimerBottomSheet();
             }
           },
         ),
@@ -803,6 +808,86 @@ class _NowPlayingScreenState extends State<NowPlayingScreen>
         );
       }
     }
+  }
+
+  void _showTimerBottomSheet() {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: AppColors.background,
+      builder: (context) => Container(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              'Hẹn giờ tắt nhạc',
+              style: GoogleFonts.montserrat(
+                color: Colors.white,
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 20),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: [15, 30, 45, 60].map((minutes) {
+                return ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: _sleepMinutes == minutes
+                        ? Colors.purple
+                        : Colors.grey[800],
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 24,
+                      vertical: 12,
+                    ),
+                  ),
+                  onPressed: () {
+                    _setSleepTimer(minutes);
+                    Navigator.pop(context);
+                  },
+                  child: Text('$minutes phút'),
+                );
+              }).toList(),
+            ),
+            const SizedBox(height: 16),
+            if (_sleepTimer != null)
+              TextButton(
+                onPressed: _cancelSleepTimer,
+                child: const Text(
+                  'Hủy hẹn giờ',
+                  style: TextStyle(color: Colors.red),
+                ),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _setSleepTimer(int minutes) {
+    _cancelSleepTimer();
+    setState(() => _sleepMinutes = minutes);
+
+    _sleepTimer = Timer(Duration(minutes: minutes), () {
+      _stopPlayback();
+      setState(() {
+        isPlaying = false;
+        _sleepTimer = null;
+        _sleepMinutes = null;
+      });
+    });
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('Đã đặt hẹn giờ sau $minutes phút')),
+    );
+  }
+
+  void _cancelSleepTimer() {
+    _sleepTimer?.cancel();
+    setState(() {
+      _sleepTimer = null;
+      _sleepMinutes = null;
+    });
   }
 
   @override

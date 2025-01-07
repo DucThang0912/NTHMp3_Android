@@ -112,6 +112,7 @@ class AuthProvider with ChangeNotifier {
     notifyListeners();
   }
 
+  // Đăng nhập bằng Google
   Future<bool> socialLogin(SocialLoginRequest request) async {
     try {
       _isLoading = true;
@@ -132,4 +133,7 @@ class AuthProvider with ChangeNotifier {
       notifyListeners();
     }
   }
+
+  // Lấy dịch vụ đăng nhập
+  AuthService get authService => _authService;
 }
