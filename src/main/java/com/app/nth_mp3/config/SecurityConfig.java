@@ -71,32 +71,28 @@ public class SecurityConfig {
                 .requestMatchers(
                     "/api/auth/**",
                     "/api/social/login",
-                    "/api/playlists/get-by/{id}",
-                    "/api/playlists/create",
-                    "/api/playlists/update/{id}",
-                    "/api/playlists/delete/{id}",
-                    "/api/playlists/toggle-visibility/{id}",
-                    "/api/playlists/public",
-                    "/api/playlists/user/{userId}",
                     "/api/genres/list",
                     "/api/genres/get-by/{id}",
                     "/api/songs/list",
                     "/api/songs/get-by/{id}",
                     "/api/artists/list",
-                    "/api/artists/get-by/{id}",
-                    "/api/albums/list",
-                    "/api/albums/get-by/{id}"
+                    "/api/artists/get-by/{id}"
                 ).permitAll()
                 
                 // URLs chỉ cho ADMIN
                 .requestMatchers(
                     "/api/albums/**",
                     "/api/artists/**",
-                    "/api/genres/**",
-                    "/api/playlists/**",
-                    "/api/songs/**"
+                    "/api/genres/**"
                 ).hasRole("ADMIN")
                 
+                // Thêm cấu hình riêng cho playlist
+                .requestMatchers("api/users/**").hasAnyRole("USER", "ADMIN")
+                .requestMatchers("/api/playlists/**").hasAnyRole("USER", "ADMIN")
+                .requestMatchers("/api/playlists/{playlistId}/songs/**").hasAnyRole("USER", "ADMIN")
+                .requestMatchers("/api/playhistory/**").hasAnyRole("USER", "ADMIN")
+                .requestMatchers("/api/songs/**").hasAnyRole("USER", "ADMIN")
+
                 // Các request còn lại cần xác thực
                 .anyRequest().authenticated()
             );

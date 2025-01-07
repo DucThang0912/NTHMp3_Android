@@ -30,6 +30,16 @@ public class PlaylistServiceImpl implements PlaylistService {
     // Tạo playlist
     @Override
     public Playlist createPlaylist(Playlist playlist) {
+        // Kiểm tra xem playlist name đã tồn tại chưa
+        boolean nameExists = playlistRepository.existsByNameAndUserId(
+            playlist.getName(), 
+            playlist.getUser().getId()
+        );
+        
+        if (nameExists) {
+            throw new RuntimeException("Playlist với tên này đã tồn tại!");
+        }
+        
         return playlistRepository.save(playlist);
     }
 
@@ -58,6 +68,12 @@ public class PlaylistServiceImpl implements PlaylistService {
     @Override
     public List<Playlist> getPlaylistsByUserId(Long userId) {
         return playlistRepository.findByUserId(userId);
+    }
+
+    // Lấy playlist theo username
+    @Override
+    public List<Playlist> getPlaylistsByUsername(String username) {
+        return playlistRepository.findByUser_Username(username);
     }
 
     // Lấy playlist công khai

@@ -57,9 +57,10 @@ public class PlaylistSongServiceImpl implements PlaylistSongService {
 
     // Lấy danh sách bài hát trong playlist
     @Override
+    @Transactional
     public List<Song> getSongsInPlaylist(Long playlistId) {
-        return playlistSongRepository.findByPlaylistId(playlistId)
-                .stream()
+        List<PlaylistSong> playlistSongs = playlistSongRepository.findByPlaylistId(playlistId);
+        return playlistSongs.stream()
                 .map(PlaylistSong::getSong)
                 .collect(Collectors.toList());
     }

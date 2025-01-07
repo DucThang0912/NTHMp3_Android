@@ -24,6 +24,7 @@ import com.fasterxml.jackson.annotation.ObjectIdGenerators;
 @JsonIdentityInfo(
   generator = ObjectIdGenerators.PropertyGenerator.class, 
   property = "id")
+@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 public class User extends Base {
 
     private String username; // tên người dùng

@@ -53,14 +53,14 @@ public class PlayHistoryController {
     }
 
     // API toggle yêu thích
-    @PostMapping("/favorite/toggle/{songId}")
+    @PostMapping("/favorite/toggle/{spotifyId}")
     @PreAuthorize("hasRole('ADMIN') or hasRole('USER')")
     public ResponseEntity<?> toggleFavorite(
-            @PathVariable Long songId,
+            @PathVariable String spotifyId,
             Authentication authentication) {
         try {
             UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
-            boolean isFavorited = playHistoryService.toggleFavorite(userDetails.getId(), songId);
+            boolean isFavorited = playHistoryService.toggleFavorite(userDetails.getId(), spotifyId);
             return ResponseEntity.ok(isFavorited);
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(e.getMessage());

@@ -58,28 +58,38 @@ public class PlayHistoryServiceImpl implements PlayHistoryService {
     // ---------------------------------------------FAVORITE----------------------------------------------
 
     // Lấy danh sách yêu thích
+    @Override
     public List<Playhistory> getFavorites(Long userId) {
         return playHistoryRepository.findByUserIdAndType(userId, Playhistory.HistoryType.FAVORITE);
     }
 
     // Toggle yêu thích (thêm/xóa)
     @Transactional
-    public boolean toggleFavorite(Long userId, Long songId) {
+    public boolean toggleFavorite(Long userId, String spotifyId) {
+        Song song = songRepository.findBySpotifyId(spotifyId)
+            .orElseThrow(() -> new RuntimeException("Song not found"));
+        
+        // Kiểm tra xem bài hát đã tồn tại trong favorites chưa
         boolean isFavorited = playHistoryRepository
-            .existsByUserIdAndSongIdAndType(userId, songId, Playhistory.HistoryType.FAVORITE);
+            .existsByUserIdAndSongIdAndType(userId, song.getId(), Playhistory.HistoryType.FAVORITE);
             
+        // Kiểm tra title đã tồn tại chưa
+        boolean titleExists = playHistoryRepository.existsByUserIdAndType(userId, Playhistory.HistoryType.FAVORITE)
+            && playHistoryRepository.findByUserIdAndType(userId, Playhistory.HistoryType.FAVORITE).stream()
+            .anyMatch(h -> h.getSong().getTitle().equals(song.getTitle()));
+
         if (isFavorited) {
             // Nếu đã yêu thích -> xóa
             playHistoryRepository.deleteByUserIdAndSongIdAndType(
-                userId, songId, Playhistory.HistoryType.FAVORITE);
+                userId, song.getId(), Playhistory.HistoryType.FAVORITE);
             return false;
+        } else if (titleExists) {
+            // Nếu title đã tồn tại -> không thêm mới
+            return true;
         } else {
-            // Nếu chưa yêu thích -> thêm mới
+            // Nếu chưa yêu thích và title chưa tồn tại -> thêm mới
             User user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User not found"));
-                
-            Song song = songRepository.findById(songId)
-                .orElseThrow(() -> new RuntimeException("Song not found"));
 
             Playhistory history = new Playhistory();
             history.setUser(user);

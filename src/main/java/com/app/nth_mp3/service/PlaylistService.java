@@ -13,6 +13,7 @@ public interface PlaylistService {
     
     // Các phương thức bổ sung
     List<Playlist> getPlaylistsByUserId(Long userId);
+    List<Playlist> getPlaylistsByUsername(String username);
     List<Playlist> getPublicPlaylists();
     void togglePlaylistVisibility(Long id);
 } 

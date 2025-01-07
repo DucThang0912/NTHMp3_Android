@@ -13,4 +13,5 @@ public interface PlayHistoryRepository extends JpaRepository<Playhistory, Long> 
     boolean existsByUserIdAndSongIdAndType(Long userId, Long songId, Playhistory.HistoryType type);
     List<Playhistory> findByUserIdAndType(Long userId, Playhistory.HistoryType type);
     void deleteByUserIdAndSongIdAndType(Long userId, Long songId, Playhistory.HistoryType type);
+    boolean existsByUserIdAndType(Long userId, Playhistory.HistoryType type);
 }

@@ -6,7 +6,9 @@ import com.app.nth_mp3.service.PlaylistSongService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+import org.hibernate.Hibernate;
 
 import java.util.List;
 
@@ -19,6 +21,7 @@ public class PlaylistSongController {
 
     // API thêm bài hát vào playlist
     @PostMapping("/{songId}")
+    @PreAuthorize("hasRole('USER') or hasRole('ADMIN')")
     public ResponseEntity<PlaylistSong> addSongToPlaylist(
             @PathVariable Long playlistId,
             @PathVariable Long songId) {
@@ -34,6 +37,7 @@ public class PlaylistSongController {
 
     // API xóa bài hát khỏi playlist
     @DeleteMapping("/{songId}")
+    @PreAuthorize("hasRole('USER') or hasRole('ADMIN')")
     public ResponseEntity<HttpStatus> removeSongFromPlaylist(
             @PathVariable Long playlistId,
             @PathVariable Long songId) {
@@ -47,9 +51,14 @@ public class PlaylistSongController {
 
     // API lấy danh sách bài hát trong playlist
     @GetMapping
+    @PreAuthorize("hasRole('USER') or hasRole('ADMIN')")
     public ResponseEntity<List<Song>> getSongsInPlaylist(@PathVariable Long playlistId) {
         try {
             List<Song> songs = playlistSongService.getSongsInPlaylist(playlistId);
+            // Đảm bảo load hết các thuộc tính lazy
+            songs.forEach(song -> {
+                Hibernate.initialize(song);
+            });
             return new ResponseEntity<>(songs, HttpStatus.OK);
         } catch (Exception e) {
             return new ResponseEntity<>(null, HttpStatus.INTERNAL_SERVER_ERROR);
@@ -58,6 +67,7 @@ public class PlaylistSongController {
 
     // API kiểm tra bài hát có trong playlist không
     @GetMapping("/{songId}/check")
+    @PreAuthorize("hasRole('USER') or hasRole('ADMIN')")
     public ResponseEntity<Boolean> checkSongInPlaylist(
             @PathVariable Long playlistId,
             @PathVariable Long songId) {

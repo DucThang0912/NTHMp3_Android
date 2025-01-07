@@ -7,6 +7,6 @@ public interface PlayHistoryService {
     Playhistory addToHistory(Long userId, Long songId);
     List<Playhistory> getUserHistory(Long userId);
     void clearHistory(Long userId);
-    boolean toggleFavorite(Long userId, Long songId);
+    boolean toggleFavorite(Long userId, String spotifyId);
     List<Playhistory> getFavorites(Long userId);
 }

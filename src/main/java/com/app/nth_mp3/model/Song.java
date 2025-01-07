@@ -1,15 +1,16 @@
 package com.app.nth_mp3.model;
 
-import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
-import jakarta.persistence.FetchType;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import java.util.HashSet;
+import java.util.Set;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 
 @Getter
 @Setter
@@ -17,31 +18,22 @@ import lombok.Setter;
 @NoArgsConstructor
 @AllArgsConstructor
 @Table(name = "song")
+@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 public class Song extends Base {
 
-    @Column(nullable = false)
-    private String title; // tên bài hát
+    private String spotifyId;  // ID của bài hát trên Spotify
+    private String title;
+    private String artistName; // Tên nghệ sĩ
+    private String albumName;  // Tên album
+    private String genreName;  // Thể loại
+    private int duration;
+    private String filePath;
+    private String imageUrl;
+    private String lyrics;
+    private int playCount;     // Số lần phát trong ứng dụng của bạn
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "artist_id", nullable = false)
-    private Artist artist; // người sáng tác bài hát
-
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "album_id", nullable = true)
-    private Album album; // album chứa bài hát
-
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "genre_id", nullable = false)
-    private Genre genre; // thể loại bài hát
-
-    @Column(nullable = false)
-    private int duration; // thời gian bài hát tính bằng giây
-
-    @Column(nullable = false)
-    private String filePath; // đường dẫn âm thanh bài hát
-
-    private String lyrics; // lời bài hát
-
-    private int playCount; // số lần nghe
+    @OneToMany(mappedBy = "song")
+    @JsonManagedReference("song-playlistsong")
+    private Set<PlaylistSong> playlistSongs = new HashSet<>();
 
 }

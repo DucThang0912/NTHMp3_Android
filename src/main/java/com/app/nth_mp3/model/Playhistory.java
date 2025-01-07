@@ -19,14 +19,14 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 @NoArgsConstructor
 @AllArgsConstructor
 @Table(name = "playhistory")
-@JsonIgnoreProperties({"user", "song"})
+@JsonIgnoreProperties({"user"})
 public class Playhistory extends Base {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
     private User user; // người nghe
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "song_id", nullable = false)
     private Song song; // bài hát được nghe
 
