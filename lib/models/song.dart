@@ -4,6 +4,7 @@ import 'base_model.dart';
 import 'genre.dart';
 
 class Song extends BaseModel {
+  String _spotifyId;
   late String title;
   late String artistName;
   late int artistId;
@@ -17,8 +18,13 @@ class Song extends BaseModel {
   int? playCount;
   String? imageUrl;
 
+  @override
+  int? get id => null;
+
+  String get spotifyId => _spotifyId;
+
   Song({
-    super.id,
+    required String id,
     super.createdDate,
     super.updatedDate,
     required this.title,
@@ -33,21 +39,23 @@ class Song extends BaseModel {
     this.lyrics,
     this.playCount,
     this.imageUrl,
-  });
+  }) : _spotifyId = id;
 
-  Song.fromJson(Map<String, dynamic> json) : super.fromJson(json) {
-    title = json['title'];
-    artistName = json['artistName'];
-    artistId = json['artistId'];
-    albumTitle = json['albumTitle'];
-    albumId = json['albumId'];
-    genreName = json['genreName'];
-    genreId = json['genreId'];
-    duration = json['duration'];
-    filePath = json['filePath'];
-    lyrics = json['lyrics'];
-    playCount = json['playCount'];
-  }
+  Song.fromJson(Map<String, dynamic> json) : 
+    _spotifyId = json['id']?.toString() ?? '',
+    super.fromJson(json) {
+      title = json['title'];
+      artistName = json['artistName'];
+      artistId = json['artistId'];
+      albumTitle = json['albumTitle'];
+      albumId = json['albumId'];
+      genreName = json['genreName'];
+      genreId = json['genreId'];
+      duration = json['duration'];
+      filePath = json['filePath'];
+      lyrics = json['lyrics'];
+      playCount = json['playCount'];
+    }
 
   @override
   Map<String, dynamic> toJson() {
@@ -67,7 +75,7 @@ class Song extends BaseModel {
   }
 
   Song copyWith({
-    int? id,
+    String? id,
     String? title,
     String? artistName,
     int? artistId,
@@ -82,7 +90,7 @@ class Song extends BaseModel {
     DateTime? createdDate,
   }) {
     return Song(
-      id: id ?? this.id,
+      id: id ?? _spotifyId,
       title: title ?? this.title,
       artistName: artistName ?? this.artistName,
       artistId: artistId ?? this.artistId,

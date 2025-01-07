@@ -51,88 +51,70 @@ class _NowPlayingScreenState extends State<NowPlayingScreen>
     _currentSong = widget.song;
     
     _setupAudioPlayer();
+    _initializeAudio();
     
-    // Load song details when screen opens
-    WidgetsBinding.instance.addPostFrameCallback((_) async {
-      if (mounted) {
-        final spotifyService = Provider.of<SpotifyProvider>(context, listen: false).spotifyService;
+    // Load lyrics sau khi màn hình đã được render
+    _loadLyrics();
+  }
+
+  Future<void> _loadLyrics() async {
+    // Delay một chút để đảm bảo nhạc đã bắt đầu phát
+    await Future.delayed(Duration(seconds: 1));
+    
+    if (mounted) {
+      final spotifyService = Provider.of<SpotifyProvider>(context, listen: false).spotifyService;
+      try {
         final updatedSong = await spotifyService.loadSongDetails(_currentSong);
-        
         if (mounted) {
           setState(() {
             _currentSong = updatedSong;
           });
-          _initializeAudio();
         }
-      }
-    });
-  }
-
-  Future<void> _initializeAudio() async {
-    try {
-      print("Current song path: ${_currentSong.filePath}"); // Debug log
-      
-      if (_currentSong.filePath.isEmpty) {
-        throw Exception('No preview available');
-      }
-
-      // Đặt lại trạng thái
-      await _audioPlayer.stop();
-      await _audioPlayer.setUrl(_currentSong.filePath);
-      
-      // Lấy duration thực tế
-      final duration = await _audioPlayer.duration;
-      print("Audio duration: $duration"); // Debug log
-      
-      if (mounted) {
-        setState(() {
-          _duration = duration ?? const Duration(seconds: 30);
-          isPlaying = true;
-        });
-        
-        // Bắt đầu phát nhạc và animation
-        _rotationController.repeat();
-        await _audioPlayer.play();
-      }
-    } catch (e) {
-      print('Error initializing audio: $e');
-      if (mounted) {
-        setState(() => isPlaying = false);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              e.toString().contains('preview') 
-                ? 'Bài hát này không có bản preview' 
-                : 'Không thể phát bài hát này: ${e.toString()}'
-            ),
-          ),
-        );
+      } catch (e) {
+        print('Error loading lyrics: $e');
+        // Không throw lỗi vì lyrics không quan trọng bằng việc phát nhạc
       }
     }
   }
 
-  void _setupAudioPlayer() {
-    _audioPlayer.durationStream.listen((duration) {
-      if (mounted) {
-        setState(() => _duration = duration ?? Duration.zero);
-      }
-    });
+  Future<void> _initializeAudio() async {
+    try {
+      final spotifyService = Provider.of<SpotifyProvider>(context, listen: false).spotifyService;
+      await spotifyService.playSpotifyTrack(_currentSong.spotifyId);
+      setState(() {
+        isPlaying = true;
+        _position = Duration.zero;
+        currentSliderValue = 0;
+        _duration = Duration(seconds: _currentSong.duration);
+        _rotationController.repeat();
+      });
+    } catch (e) {
+      print('Error playing: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Không thể phát bài hát này')),
+      );
+    }
+  }
 
-    _audioPlayer.positionStream.listen((position) {
-      if (mounted) {
+  void _setupAudioPlayer() {
+    // Lắng nghe thời lượng bài hát từ Spotify
+    Timer.periodic(const Duration(milliseconds: 500), (timer) {
+      if (!mounted) {
+        timer.cancel();
+        return;
+      }
+      
+      if (isPlaying) {
         setState(() {
-          _position = position;
-          currentSliderValue = position.inSeconds.toDouble();
+          _position = _position + const Duration(milliseconds: 500);
+          currentSliderValue = _position.inSeconds.toDouble();
         });
       }
     });
 
-    _audioPlayer.playerStateStream.listen((state) {
-      if (state.processingState == ProcessingState.completed) {
-        if (mounted) {
-          _handleSongEnd();
-        }
-      }
+    // Cập nhật duration khi bài hát được load
+    setState(() {
+      _duration = Duration(seconds: _currentSong.duration);
     });
   }
 
@@ -301,13 +283,16 @@ class _NowPlayingScreenState extends State<NowPlayingScreen>
             ),
           ),
           child: Slider(
-            value: currentSliderValue,
+            value: currentSliderValue.clamp(0, _duration.inSeconds.toDouble()),
             max: _duration.inSeconds.toDouble(),
-            onChanged: (value) {
+            onChanged: (value) async {
+              final spotifyService = Provider.of<SpotifyProvider>(context, listen: false).spotifyService;
               setState(() {
                 currentSliderValue = value;
                 _position = Duration(seconds: value.toInt());
               });
+              // Seek to position in milliseconds
+              await spotifyService.seekToPosition(value.toInt() * 1000);
             },
           ),
         ),
@@ -471,9 +456,10 @@ class _NowPlayingScreenState extends State<NowPlayingScreen>
   }
 
   Widget _buildLyricsView() {
-    return Container(
+    return SingleChildScrollView(
       padding: const EdgeInsets.fromLTRB(24, 24, 24, 200),
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
             'Lời bài hát',
@@ -484,28 +470,14 @@ class _NowPlayingScreenState extends State<NowPlayingScreen>
             ),
           ),
           const SizedBox(height: 20),
-          Expanded(
-            child: Container(
-              width: double.infinity,
-              decoration: BoxDecoration(
-                color: AppColors.surface.withOpacity(0.3),
-                borderRadius: BorderRadius.circular(16),
-              ),
-              padding: const EdgeInsets.all(16),
-              child: SingleChildScrollView(
-                child: Text(
-                  widget.song.lyrics ?? 'Chưa có lời bài hát',
-                  style: GoogleFonts.montserrat(
-                    color: Colors.white70,
-                    fontSize: 16,
-                    height: 1.5,
-                  ),
-                  textAlign: TextAlign.center,
-                ),
-              ),
+          Text(
+            _currentSong.lyrics ?? 'Đang tải lời bài hát...',
+            style: GoogleFonts.montserrat(
+              color: Colors.white.withOpacity(0.8),
+              fontSize: 16,
+              height: 1.5,
             ),
           ),
-          const SizedBox(height: 30),
         ],
       ),
     );
@@ -555,6 +527,33 @@ class _NowPlayingScreenState extends State<NowPlayingScreen>
     return _playMode == PlayMode.none 
         ? Colors.white 
         : AppColors.glowColors['blue']!;
+  }
+
+  Future<void> _togglePlayPause() async {
+    try {
+      final spotifyService = Provider.of<SpotifyProvider>(context, listen: false).spotifyService;
+      
+      if (isPlaying) {
+        await spotifyService.pauseTrack();
+      } else {
+        if (_position.inSeconds == 0) {
+          await _initializeAudio();
+        } else {
+          await spotifyService.resumeTrack();
+        }
+      }
+      
+      setState(() {
+        isPlaying = !isPlaying;
+        if (isPlaying) {
+          _rotationController.repeat();
+        } else {
+          _rotationController.stop();
+        }
+      });
+    } catch (e) {
+      print('Error toggling play/pause: $e');
+    }
   }
 
   @override

@@ -315,7 +315,7 @@ class _SearchScreenState extends State<SearchScreen> with SingleTickerProviderSt
         final song = _searchResults[index];
         return ListTile(
           leading: Hero(
-            tag: 'song_${song.id}',
+            tag: 'song_${song.id ?? DateTime.now().millisecondsSinceEpoch}_$index',
             child: ClipRRect(
               borderRadius: BorderRadius.circular(8),
               child: song.imageUrl != null && song.imageUrl!.isNotEmpty

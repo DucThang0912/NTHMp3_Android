@@ -4,17 +4,51 @@ import '../models/song.dart';
 import '../models/artist.dart';
 import '../models/album.dart';
 import '../models/genre.dart';
+import 'package:flutter/services.dart';
+import 'dart:async';
 
 class SpotifyService {
   static const String baseUrl = 'https://api.spotify.com/v1';
   final String clientId;
   final String clientSecret;
   String? _accessToken;
+  static const platform = MethodChannel('com.example.nthmusicmp3/spotify');
 
   SpotifyService({
     required this.clientId,
     required this.clientSecret,
-  });
+  }) {
+    _getAccessToken();
+  }
+
+  Future<void> _initSpotifySDK() async {
+    try {
+      final isConnected = await platform.invokeMethod<bool>('isSpotifyConnected') ?? false;
+      if (!isConnected) {
+        await Future.delayed(Duration(milliseconds: 500));
+        final result = await platform.invokeMethod('connectSpotify');
+        print('Spotify connected: $result');
+      }
+    } catch (e) {
+      if (e is! MissingPluginException) {
+        print('Error initializing Spotify SDK: $e');
+      }
+    }
+  }
+
+  Future<void> playSpotifyTrack(String spotifyId) async {
+    try {
+      await platform.invokeMethod('connectSpotify');
+      await Future.delayed(Duration(milliseconds: 1000)); // Đợi kết nối
+      
+      final uri = 'spotify:track:$spotifyId';
+      print('Playing track with URI: $uri');
+      await platform.invokeMethod('playTrack', {'uri': uri});
+    } catch (e) {
+      print('Error playing track: $e');
+      rethrow;
+    }
+  }
 
   Future<void> _getAccessToken() async {
     final bytes = utf8.encode('$clientId:$clientSecret');
@@ -50,7 +84,7 @@ class SpotifyService {
       final tracks = data['tracks']['items'] as List;
       
       return tracks.map((track) => Song(
-        id: int.tryParse(track['id']) ?? 0,
+        id: track['id'],
         title: track['name'],
         artistName: track['artists'][0]['name'],
         artistId: int.tryParse(track['artists'][0]['id']) ?? 0,
@@ -59,7 +93,7 @@ class SpotifyService {
         genreName: track['album']['genres']?.first ?? 'Unknown',
         genreId: 0,
         duration: track['duration_ms'] ~/ 1000,
-        filePath: 'https://open.spotify.com/embed/track/${track['id']}',
+        filePath: 'spotify:track:${track['id']}',
         imageUrl: track['album']['images']?.isNotEmpty == true ? track['album']['images'][0]['url'] : '',
         lyrics: null,
       )).toList();
@@ -102,7 +136,7 @@ class SpotifyService {
       final albums = data['albums']['items'] as List;
       
       return albums.map((album) => Song(
-        id: int.tryParse(album['id']) ?? 0,
+        id: album['id'].toString(),
         title: album['name'],
         artistName: album['artists'][0]['name'],
         artistId: int.tryParse(album['artists'][0]['id']) ?? 0,
@@ -142,19 +176,39 @@ class SpotifyService {
     }
   }
 
-  Future<String> _getLyrics(String artistName, String title) async {
-    try {
-      final response = await http.get(
-        Uri.parse('https://api.lyrics.ovh/v1/$artistName/$title'),
-      ).timeout(const Duration(seconds: 5));
+  Future<String> _getLyrics(String trackId) async {
+    if (_accessToken == null) await _getAccessToken();
 
-      if (response.statusCode == 200) {
-        final data = json.decode(response.body);
-        return data['lyrics'] ?? 'Chưa có lời bài hát';
+    try {
+      print('Fetching lyrics for track ID: $trackId');
+      // Lấy thông tin bài hát trước
+      final trackResponse = await http.get(
+        Uri.parse('$baseUrl/tracks/$trackId'),
+        headers: {'Authorization': 'Bearer $_accessToken'},
+      );
+
+      if (trackResponse.statusCode != 200) {
+        return 'Hiện tại bài hát không có lời bài hát';
       }
-      return 'Chưa có lời bài hát';
+
+      final trackData = json.decode(trackResponse.body);
+      final trackName = Uri.encodeComponent(trackData['name']);
+      final artistName = Uri.encodeComponent(trackData['artists'][0]['name']);
+
+      // Gọi API lyrics.ovh để lấy lời bài hát
+      final lyricsResponse = await http.get(
+        Uri.parse('https://api.lyrics.ovh/v1/$artistName/$trackName'),
+      );
+
+      if (lyricsResponse.statusCode == 200) {
+        final data = json.decode(lyricsResponse.body);
+        return data['lyrics'] ?? 'Hiện tại bài hát không có lời bài hát';
+      }
+      
+      return 'Hiện tại bài hát không có lời bài hát';
     } catch (e) {
-      return 'Chưa có lời bài hát';
+      print('Exception getting lyrics: $e');
+      return 'Đã xảy ra lỗi khi tải lời bài hát';
     }
   }
 
@@ -162,30 +216,8 @@ class SpotifyService {
     if (_accessToken == null) await _getAccessToken();
 
     try {
-      final response = await http.get(
-        Uri.parse('$baseUrl/tracks/${song.id}'),
-        headers: {'Authorization': 'Bearer $_accessToken'},
-      );
-
-      if (response.statusCode == 200) {
-        final track = json.decode(response.body);
-        print('Track data: $track'); // Debug log
-        
-        final previewUrl = track['preview_url'];
-        if (previewUrl == null) {
-          throw Exception('No preview available');
-        }
-        
-        // Load lyrics
-        String lyrics = await _getLyrics(song.artistName, song.title);
-        
-        return song.copyWith(
-          duration: track['duration_ms'] ~/ 1000,
-          filePath: previewUrl,
-          lyrics: lyrics,
-        );
-      }
-      throw Exception('Failed to load song details');
+      String lyrics = await _getLyrics(song.spotifyId);
+      return song.copyWith(lyrics: lyrics);
     } catch (e) {
       print('Error in loadSongDetails: $e');
       rethrow;
@@ -237,7 +269,7 @@ class SpotifyService {
       final artist = Artist(
         id: artistId,
         name: artistData['name'] as String? ?? 'Unknown Artist',
-        avatarUrl: artistData['images']?.isNotEmpty == true ? artistData['images'][0]['url'] as String : null,
+        avatarUrl: artistData['images']?.isNotEmpty == true ? artistData['images'][0]['url'] : null,
         totalSongs: tracksData['tracks']?.length ?? 0,
         totalAlbums: albumsData['items']?.length ?? 0,
         songs: tracksData['tracks'] != null ? _mapSongsFromTracks(tracksData['tracks'] as List) : [],
@@ -282,7 +314,7 @@ class SpotifyService {
 
   List<Song> _mapSongsFromAlbumTracks(List<dynamic> tracks, dynamic albumData) {
     return tracks.map((track) => Song(
-      id: int.tryParse(track['id']?.toString() ?? '0') ?? 0,
+      id: track['id'].toString(),
       title: track['name']?.toString() ?? 'Unknown Title',
       artistName: track['artists']?[0]?['name']?.toString() ?? 'Unknown Artist',
       artistId: int.tryParse(track['artists']?[0]?['id']?.toString() ?? '0') ?? 0,
@@ -292,13 +324,13 @@ class SpotifyService {
       imageUrl: albumData['images']?[0]?['url']?.toString(),
       genreName: 'Unknown',
       genreId: 0,
-      filePath: track['preview_url']?.toString() ?? '',
+      filePath: 'spotify:track:${track['id']}',
     )).toList();
   }
 
   List<Song> _mapSongsFromTracks(List<dynamic> tracks) {
     return tracks.map((track) => Song(
-      id: int.tryParse(track['id'].toString()) ?? 0,
+      id: track['id'].toString(),
       title: track['name']?.toString() ?? 'Unknown Title',
       artistName: track['artists']?[0]?['name']?.toString() ?? 'Unknown Artist',
       artistId: int.tryParse(track['artists']?[0]?['id']?.toString() ?? '0') ?? 0,
@@ -308,7 +340,34 @@ class SpotifyService {
       imageUrl: track['album']?['images']?[0]?['url']?.toString(),
       genreName: 'Unknown',
       genreId: 0,
-      filePath: track['preview_url']?.toString() ?? '',
+      filePath: 'spotify:track:${track['id']}',
     )).toList();
+  }
+
+  Future<void> pauseTrack() async {
+    try {
+      await platform.invokeMethod('pauseTrack');
+    } catch (e) {
+      print('Error pausing track: $e');
+      rethrow;
+    }
+  }
+
+  Future<void> resumeTrack() async {
+    try {
+      await platform.invokeMethod('resumeTrack');
+    } catch (e) {
+      print('Error resuming track: $e');
+      rethrow;
+    }
+  }
+
+  Future<void> seekToPosition(int positionMs) async {
+    try {
+      await platform.invokeMethod('seekToPosition', {'positionMs': positionMs});
+    } catch (e) {
+      print('Error seeking: $e');
+      rethrow;
+    }
   }
 } 

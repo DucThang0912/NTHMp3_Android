@@ -160,8 +160,8 @@ class _FeaturedBannerState extends State<_FeaturedBanner> with SingleTickerProvi
   @override
   Widget build(BuildContext context) {
     return Container(
-      height: 180,
-      padding: const EdgeInsets.symmetric(vertical: 16),
+      height: 150,
+      padding: const EdgeInsets.symmetric(vertical: 8),
       child: PageView.builder(
         itemCount: 3,
         itemBuilder: (context, index) {
@@ -186,7 +186,6 @@ class _FeaturedBannerState extends State<_FeaturedBanner> with SingleTickerProvi
                 ),
                 child: Stack(
                   children: [
-                    // Animated Background Pattern
                     CustomPaint(
                       size: Size.infinite,
                       painter: index == 0 
@@ -195,9 +194,8 @@ class _FeaturedBannerState extends State<_FeaturedBanner> with SingleTickerProvi
                               ? CirclePainter(animation: _animation.value, color: Colors.white.withOpacity(0.1))
                               : BubblePainter(animation: _animation.value, color: Colors.white.withOpacity(0.1)),
                     ),
-                    // Content
                     Padding(
-                      padding: const EdgeInsets.all(20),
+                      padding: const EdgeInsets.all(16),
                       child: Row(
                         children: [
                           Expanded(
@@ -213,17 +211,17 @@ class _FeaturedBannerState extends State<_FeaturedBanner> with SingleTickerProvi
                                     _bannerData[index]['title'],
                                     style: GoogleFonts.montserrat(
                                       color: Colors.white,
-                                      fontSize: 32,
+                                      fontSize: 28,
                                       fontWeight: FontWeight.bold,
                                     ),
                                   ),
                                 ),
-                                const SizedBox(height: 8),
+                                const SizedBox(height: 4),
                                 Text(
                                   _bannerData[index]['subtitle'],
                                   style: GoogleFonts.montserrat(
                                     color: Colors.white.withOpacity(0.8),
-                                    fontSize: 16,
+                                    fontSize: 14,
                                   ),
                                 ),
                               ],
@@ -237,7 +235,7 @@ class _FeaturedBannerState extends State<_FeaturedBanner> with SingleTickerProvi
                                 child: Icon(
                                   _bannerData[index]['icon'],
                                   color: Colors.white.withOpacity(0.8),
-                                  size: 60 + (math.sin(_animation.value) * 10),
+                                  size: 50,
                                 ),
                               );
                             },
@@ -457,7 +455,7 @@ class _RecentlyPlayedState extends State<_RecentlyPlayed> {
   Future<void> _loadRecentSongs() async {
     try {
       final spotifyProvider = Provider.of<SpotifyProvider>(context, listen: false);
-      final songs = await spotifyProvider.spotifyService.getNewReleases();
+      final songs = await spotifyProvider.spotifyService.searchSongs('recent popular vietnam');
       setState(() {
         recentSongs = songs.take(10).toList();
         isLoading = false;

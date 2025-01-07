@@ -27,7 +27,10 @@ class MyApp extends StatelessWidget {
           create: (_) => AuthProvider(authService),
         ),
         ChangeNotifierProvider(
-          create: (_) => SpotifyProvider(),
+          create: (_) => SpotifyProvider(
+            clientId: "24dfc57421d5444ab08ca1c434f30935",
+            clientSecret: "03f0ecd3b5c2412a893e3fdfbb4da647",
+          ),
         ),
       ],
       child: MaterialApp(
