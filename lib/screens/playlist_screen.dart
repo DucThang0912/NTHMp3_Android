@@ -171,7 +171,8 @@ class _PlaylistScreenState extends State<PlaylistScreen> {
           borderRadius: BorderRadius.circular(12),
         ),
         child: ListTile(
-          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          contentPadding:
+              const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
           leading: Container(
             width: 50,
             height: 50,
@@ -237,7 +238,8 @@ class _PlaylistScreenState extends State<PlaylistScreen> {
         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
         children: [
           IconButton(
-            icon: const Icon(Icons.shuffle_rounded, color: Colors.white, size: 28),
+            icon: const Icon(Icons.shuffle_rounded,
+                color: Colors.white, size: 28),
             onPressed: () {},
           ),
           Container(
@@ -265,7 +267,8 @@ class _PlaylistScreenState extends State<PlaylistScreen> {
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Icon(Icons.play_arrow_rounded, color: Colors.white, size: 30),
+                      Icon(Icons.play_arrow_rounded,
+                          color: Colors.white, size: 30),
                       SizedBox(width: 8),
                       Text(
                         'Phát tất cả',
@@ -330,4 +333,4 @@ class _PlaylistScreenState extends State<PlaylistScreen> {
       ),
     );
   }
-} 
+}

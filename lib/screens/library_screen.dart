@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:nthmusicmp3/models/playlist.dart';
+import 'package:nthmusicmp3/services/playlist_service.dart';
 import '../constants/colors.dart';
 import '../models/album.dart';
 import '../models/artist.dart';
-import '../screens/playlist_screen.dart';
+import '../screens/playlist/playlist_screen.dart';
 import '../screens/album_screen.dart';
 import '../widgets/main_screen_bottom_nav.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:math';
 
 class LibraryScreen extends StatefulWidget {
@@ -14,7 +17,8 @@ class LibraryScreen extends StatefulWidget {
   State<LibraryScreen> createState() => _LibraryScreenState();
 }
 
-class _LibraryScreenState extends State<LibraryScreen> with SingleTickerProviderStateMixin {
+class _LibraryScreenState extends State<LibraryScreen>
+    with SingleTickerProviderStateMixin {
   late TabController _tabController;
 
   @override
@@ -52,7 +56,7 @@ class _LibraryScreenState extends State<LibraryScreen> with SingleTickerProvider
       ),
       body: TabBarView(
         controller: _tabController,
-        children: [ 
+        children: [
           _PlaylistTab(),
           _SongsTab(),
           _AlbumsTab(),
@@ -75,7 +79,8 @@ class _SliverAppBarDelegate extends SliverPersistentHeaderDelegate {
   double get maxExtent => _tabBar.preferredSize.height;
 
   @override
-  Widget build(BuildContext context, double shrinkOffset, bool overlapsContent) {
+  Widget build(
+      BuildContext context, double shrinkOffset, bool overlapsContent) {
     return Container(
       color: AppColors.background,
       child: _tabBar,
@@ -88,81 +93,173 @@ class _SliverAppBarDelegate extends SliverPersistentHeaderDelegate {
   }
 }
 
-class _PlaylistTab extends StatelessWidget {
+class _PlaylistTab extends StatefulWidget {
+  @override
+  State<_PlaylistTab> createState() => _PlaylistTabState();
+}
+
+class _PlaylistTabState extends State<_PlaylistTab> {
+  final PlaylistService _playlistService = PlaylistService();
+  List<Playlist> _playlists = [];
+  bool _isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadPlaylists();
+  }
+
+  Future<void> _loadPlaylists() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final username = prefs.getString('username') ?? '';
+      final playlists =
+          await _playlistService.getUserPlaylistsByUsername(username);
+      if (mounted) {
+        setState(() {
+          _playlists = playlists;
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      print('Error loading playlists: $e');
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
+    }
+  }
+
+  void _refreshPlaylists() {
+    setState(() => _isLoading = true);
+    _loadPlaylists();
+  }
+
   @override
   Widget build(BuildContext context) {
-    return ListView.builder(
-      padding: const EdgeInsets.all(16),
-      itemCount: 10,
-      itemBuilder: (context, index) {
-        return GestureDetector(
-          onTap: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (context) => const PlaylistScreen(),
-              ),
+    if (_isLoading) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
+    return Stack(
+      children: [
+        ListView.builder(
+          padding: const EdgeInsets.all(16),
+          itemCount: _playlists.length,
+          itemBuilder: (context, index) {
+            return PlaylistScreen(
+              playlist: _playlists[index],
+              onDeleted: _refreshPlaylists,
             );
           },
-          child: Container(
-            margin: const EdgeInsets.only(bottom: 12),
-            decoration: BoxDecoration(
-              color: AppColors.surface,
-              borderRadius: BorderRadius.circular(12),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.1),
-                  blurRadius: 8,
-                  offset: const Offset(0, 2),
-                ),
-              ],
-            ),
-            child: ListTile(
-              contentPadding: const EdgeInsets.all(12),
-              leading: ClipRRect(
-                borderRadius: BorderRadius.circular(8),
-                child: Container(
-                  width: 60,
-                  height: 60,
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                      colors: [
-                        Colors.purple.withOpacity(0.7),
-                        Colors.blue.withOpacity(0.7),
-                      ],
-                    ),
-                  ),
-                  child: const Center(
-                    child: Icon(
-                      Icons.music_note,
-                      color: Colors.white,
-                      size: 30,
-                    ),
-                  ),
-                ),
-              ),
-              title: Text(
-                'Playlist ${index + 1}',
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              subtitle: Text(
-                '${Random().nextInt(20) + 1} bài hát',
-                style: TextStyle(color: Colors.grey[400]),
-              ),
-              trailing: IconButton(
-                icon: const Icon(Icons.more_vert, color: Colors.grey),
-                onPressed: () {},
-              ),
-            ),
+        ),
+        Positioned(
+          bottom: 16,
+          right: 16,
+          child: FloatingActionButton(
+            onPressed: () => _showCreatePlaylistDialog(context),
+            backgroundColor: AppColors.primary,
+            child: const Icon(Icons.add),
           ),
-        );
-      },
+        ),
+      ],
     );
+  }
+
+  void _showCreatePlaylistDialog(BuildContext context) {
+    final nameController = TextEditingController();
+    final descriptionController = TextEditingController();
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: AppColors.surface,
+        title: const Text(
+          'Tạo Playlist Mới',
+          style: TextStyle(color: Colors.white),
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextField(
+              controller: nameController,
+              style: const TextStyle(color: Colors.white),
+              decoration: const InputDecoration(
+                hintText: 'Tên playlist',
+                hintStyle: TextStyle(color: Colors.grey),
+                enabledBorder: UnderlineInputBorder(
+                  borderSide: BorderSide(color: Colors.grey),
+                ),
+              ),
+            ),
+            const SizedBox(height: 16),
+            TextField(
+              controller: descriptionController,
+              style: const TextStyle(color: Colors.white),
+              decoration: const InputDecoration(
+                hintText: 'Mô tả (tùy chọn)',
+                hintStyle: TextStyle(color: Colors.grey),
+                enabledBorder: UnderlineInputBorder(
+                  borderSide: BorderSide(color: Colors.grey),
+                ),
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Hủy'),
+          ),
+          TextButton(
+            onPressed: () async {
+              if (nameController.text.isNotEmpty) {
+                await _createPlaylist(
+                  nameController.text,
+                  descriptionController.text,
+                );
+                if (mounted) Navigator.pop(context);
+              }
+            },
+            child: const Text('Tạo'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _createPlaylist(String name, String description) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final userId = prefs.getInt('user_id');
+
+      if (userId == null) {
+        throw Exception('Vui lòng đăng nhập để tạo playlist');
+      }
+
+      if (mounted) Navigator.pop(context);
+
+      final playlist = await _playlistService.createPlaylist({
+        'name': name,
+        'description': description,
+        'isPublic': true,
+        'user_id': userId,
+      });
+
+      if (mounted) {
+        await _loadPlaylists();
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Đã tạo playlist thành công')),
+        );
+      }
+    } catch (e) {
+      print('Error creating playlist: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Lỗi khi tạo playlist: $e')),
+        );
+      }
+    }
   }
 }
 
@@ -255,10 +352,7 @@ class _AlbumsTab extends StatelessWidget {
                   album: Album(
                     id: 0,
                     title: 'Sample Album',
-                    artist: Artist(
-                      id: '0',
-                      name: 'Sample Artist'
-                    ),
+                    artist: Artist(id: '0', name: 'Sample Artist'),
                   ),
                 ),
               ),

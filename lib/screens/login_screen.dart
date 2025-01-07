@@ -157,10 +157,12 @@ class _LoginScreenState extends State<LoginScreen>
     }
 
     try {
+      print('Đang đăng nhập với username: ${_usernameController.text}');
       final success = await authProvider.login(
         _usernameController.text,
         _passwordController.text,
       );
+      print('Kết quả đăng nhập: $success');
 
       if (success && mounted) {
         Navigator.pushAndRemoveUntil(
@@ -183,6 +185,7 @@ class _LoginScreenState extends State<LoginScreen>
         );
       }
     } catch (e) {
+      print('Lỗi đăng nhập: $e');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -450,14 +453,23 @@ class _LoginScreenState extends State<LoginScreen>
                                       borderRadius: BorderRadius.circular(15),
                                     ),
                                   ),
-                                  child: Text(
-                                    'Đăng nhập',
-                                    style: GoogleFonts.montserrat(
-                                      color: Colors.white,
-                                      fontSize: 18,
-                                      fontWeight: FontWeight.w600,
-                                    ),
-                                  ),
+                                  child: auth.isLoading
+                                      ? const SizedBox(
+                                          width: 20,
+                                          height: 20,
+                                          child: CircularProgressIndicator(
+                                            color: Colors.white,
+                                            strokeWidth: 2,
+                                          ),
+                                        )
+                                      : Text(
+                                          'Đăng nhập',
+                                          style: GoogleFonts.montserrat(
+                                            color: Colors.white,
+                                            fontSize: 18,
+                                            fontWeight: FontWeight.w600,
+                                          ),
+                                        ),
                                 ),
                               ),
                               const SizedBox(height: 30),

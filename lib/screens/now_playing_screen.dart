@@ -9,19 +9,20 @@ import '../providers/spotify_provider.dart';
 import '../services/spotify_service.dart';
 import 'dart:math';
 import '../mixins/timer_mixin.dart';
+import 'playlist/add_to_playlist_bottom_sheet.dart';
 
 enum PlayMode {
-  none,        // Phát một lần rồi dừng
-  sequential,  // Phát lần lượt
-  shuffle,     // Phát ngẫu nhiên
-  repeatOne    // Lặp lại một bài
+  none, // Phát một lần rồi dừng
+  sequential, // Phát lần lượt
+  shuffle, // Phát ngẫu nhiên
+  repeatOne // Lặp lại một bài
 }
 
 class NowPlayingScreen extends StatefulWidget {
   final Song song;
   final List<Song> playlist;
   final int currentIndex;
-  
+
   const NowPlayingScreen({
     super.key,
     required this.song,
@@ -33,7 +34,7 @@ class NowPlayingScreen extends StatefulWidget {
   State<NowPlayingScreen> createState() => _NowPlayingScreenState();
 }
 
-class _NowPlayingScreenState extends State<NowPlayingScreen> 
+class _NowPlayingScreenState extends State<NowPlayingScreen>
     with SingleTickerProviderStateMixin, TimerMixin {
   final AudioPlayer _audioPlayer = AudioPlayer();
   late PageController _pageController;
@@ -43,14 +44,14 @@ class _NowPlayingScreenState extends State<NowPlayingScreen>
   bool isFavorite = false;
   double currentSliderValue = 0;
   PlayMode _playMode = PlayMode.none;
-  
+
   late AnimationController _rotationController;
   late Song _currentSong;
   late SpotifyService _spotifyService;
   bool _initialized = false;
   late List<Song> _playlist;
   late int _currentIndex;
-  
+
   @override
   void initState() {
     super.initState();
@@ -63,15 +64,16 @@ class _NowPlayingScreenState extends State<NowPlayingScreen>
       vsync: this,
     );
     addController(_rotationController);
-    
+
     _setupAudioPlayer();
   }
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    _spotifyService = Provider.of<SpotifyProvider>(context, listen: false).spotifyService;
-    
+    _spotifyService =
+        Provider.of<SpotifyProvider>(context, listen: false).spotifyService;
+
     if (!_initialized) {
       _initializeAudio();
       _loadLyrics();
@@ -82,9 +84,10 @@ class _NowPlayingScreenState extends State<NowPlayingScreen>
   Future<void> _loadLyrics() async {
     // Delay một chút để đảm bảo nhạc đã bắt đầu phát
     await Future.delayed(Duration(seconds: 1));
-    
+
     if (mounted) {
-      final spotifyService = Provider.of<SpotifyProvider>(context, listen: false).spotifyService;
+      final spotifyService =
+          Provider.of<SpotifyProvider>(context, listen: false).spotifyService;
       try {
         final updatedSong = await spotifyService.loadSongDetails(_currentSong);
         if (mounted) {
@@ -104,10 +107,11 @@ class _NowPlayingScreenState extends State<NowPlayingScreen>
       // Dừng bài đang phát
       await _spotifyService.pauseTrack();
       await Future.delayed(Duration(milliseconds: 500));
-      
-      print('Playing song: ${_currentSong.title} with ID: ${_currentSong.spotifyId}');
+
+      print(
+          'Playing song: ${_currentSong.title} with ID: ${_currentSong.spotifyId}');
       await _spotifyService.playSpotifyTrack(_currentSong.spotifyId);
-      
+
       setState(() {
         isPlaying = true;
         _position = Duration.zero;
@@ -126,7 +130,7 @@ class _NowPlayingScreenState extends State<NowPlayingScreen>
   void _setupAudioPlayer() {
     createPeriodicTimer(const Duration(milliseconds: 500), (timer) {
       if (!mounted || !isPlaying) return;
-      
+
       final newPosition = _position + const Duration(milliseconds: 500);
       if (newPosition >= _duration) {
         _spotifyService.pauseTrack();
@@ -162,7 +166,7 @@ class _NowPlayingScreenState extends State<NowPlayingScreen>
           _rotationController.stop();
         });
         break;
-      
+
       case PlayMode.sequential:
         if (_currentIndex < _playlist.length - 1) {
           _currentIndex++;
@@ -173,7 +177,7 @@ class _NowPlayingScreenState extends State<NowPlayingScreen>
           await _initializeAudio();
         }
         break;
-      
+
       case PlayMode.shuffle:
         final random = Random();
         _currentIndex = random.nextInt(_playlist.length);
@@ -183,7 +187,7 @@ class _NowPlayingScreenState extends State<NowPlayingScreen>
         await Future.delayed(Duration(milliseconds: 500));
         await _initializeAudio();
         break;
-      
+
       case PlayMode.repeatOne:
         setState(() {
           _position = Duration.zero;
@@ -194,7 +198,7 @@ class _NowPlayingScreenState extends State<NowPlayingScreen>
         break;
     }
   }
-  
+
   @override
   void dispose() {
     _pageController.dispose();
@@ -257,7 +261,8 @@ class _NowPlayingScreenState extends State<NowPlayingScreen>
                   ),
                 ),
                 ClipOval(
-                  child: _currentSong.imageUrl != null && _currentSong.imageUrl!.isNotEmpty
+                  child: _currentSong.imageUrl != null &&
+                          _currentSong.imageUrl!.isNotEmpty
                       ? Image.network(
                           _currentSong.imageUrl!,
                           width: 180,
@@ -353,7 +358,9 @@ class _NowPlayingScreenState extends State<NowPlayingScreen>
             value: currentSliderValue.clamp(0, _duration.inSeconds.toDouble()),
             max: _duration.inSeconds.toDouble(),
             onChanged: (value) async {
-              final spotifyService = Provider.of<SpotifyProvider>(context, listen: false).spotifyService;
+              final spotifyService =
+                  Provider.of<SpotifyProvider>(context, listen: false)
+                      .spotifyService;
               setState(() {
                 currentSliderValue = value;
                 _position = Duration(seconds: value.toInt());
@@ -393,6 +400,7 @@ class _NowPlayingScreenState extends State<NowPlayingScreen>
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
       children: [
+        // Nút thích
         IconButton(
           icon: Icon(
             isFavorite ? Icons.favorite : Icons.favorite_border,
@@ -405,10 +413,12 @@ class _NowPlayingScreenState extends State<NowPlayingScreen>
             });
           },
         ),
+        // Nút phát trước
         IconButton(
           icon: const Icon(Icons.skip_previous),
           onPressed: _playPrevious,
         ),
+        // Nút phát/dừng
         GestureDetector(
           onTap: _togglePlayPause,
           child: Container(
@@ -417,7 +427,10 @@ class _NowPlayingScreenState extends State<NowPlayingScreen>
             decoration: BoxDecoration(
               shape: BoxShape.circle,
               gradient: LinearGradient(
-                colors: [Colors.purple.withOpacity(0.8), Colors.blue.withOpacity(0.8)],
+                colors: [
+                  Colors.purple.withOpacity(0.8),
+                  Colors.blue.withOpacity(0.8)
+                ],
               ),
               boxShadow: [
                 BoxShadow(
@@ -434,10 +447,12 @@ class _NowPlayingScreenState extends State<NowPlayingScreen>
             ),
           ),
         ),
+        // Nút phát tiếp
         IconButton(
           icon: const Icon(Icons.skip_next),
           onPressed: _playNext,
         ),
+        // Nút lặp lại
         IconButton(
           icon: Icon(
             _getRepeatIcon(),
@@ -475,7 +490,7 @@ class _NowPlayingScreenState extends State<NowPlayingScreen>
         children: [
           _buildActionButton(Icons.queue_music, 'Danh sách phát'),
           _buildActionButton(Icons.share, 'Chia sẻ'),
-          _buildActionButton(Icons.equalizer, 'Equalizer'),
+          _buildActionButton(Icons.playlist_add, 'Thêm vào playlist'),
           _buildActionButton(Icons.timer, 'Hẹn giờ'),
         ],
       ),
@@ -490,6 +505,15 @@ class _NowPlayingScreenState extends State<NowPlayingScreen>
           icon: Icon(icon, color: Colors.white70),
           onPressed: () {
             // Xử lý sự kiện cho từng nút
+            if (icon == Icons.queue_music) {
+              _pageController.animateToPage(
+                0,
+                duration: const Duration(milliseconds: 300),
+                curve: Curves.easeInOut,
+              );
+            } else if (icon == Icons.playlist_add) {
+              _showAddToPlaylistBottomSheet();
+            }
           },
         ),
         Text(
@@ -572,8 +596,8 @@ class _NowPlayingScreenState extends State<NowPlayingScreen>
   }
 
   Color _getRepeatColor() {
-    return _playMode == PlayMode.none 
-        ? Colors.white 
+    return _playMode == PlayMode.none
+        ? Colors.white
         : AppColors.glowColors['blue']!;
   }
 
@@ -604,7 +628,9 @@ class _NowPlayingScreenState extends State<NowPlayingScreen>
       print('Error toggling play/pause: $e');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Không thể ${isPlaying ? "dừng" : "phát"} bài hát')),
+          SnackBar(
+              content:
+                  Text('Không thể ${isPlaying ? "dừng" : "phát"} bài hát')),
         );
       }
     }
@@ -637,11 +663,12 @@ class _NowPlayingScreenState extends State<NowPlayingScreen>
       itemBuilder: (context, index) {
         final song = _playlist[index];
         final isPlaying = index == _currentIndex;
-        
+
         return Container(
           margin: const EdgeInsets.only(bottom: 12),
           decoration: BoxDecoration(
-            color: isPlaying ? Colors.purple.withOpacity(0.3) : Colors.transparent,
+            color:
+                isPlaying ? Colors.purple.withOpacity(0.3) : Colors.transparent,
             borderRadius: BorderRadius.circular(8),
           ),
           child: ListTile(
@@ -687,6 +714,14 @@ class _NowPlayingScreenState extends State<NowPlayingScreen>
     );
   }
 
+  void _showAddToPlaylistBottomSheet() {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: AppColors.background,
+      builder: (context) => AddToPlaylistBottomSheet(song: _currentSong),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -703,34 +738,38 @@ class _NowPlayingScreenState extends State<NowPlayingScreen>
                     children: [
                       // Trang 1: Danh sách phát
                       _buildPlaylistView(),
-                      
+
                       // Trang 2: Album art
                       Column(
                         children: [
                           _buildMusicInfo(),
                         ],
                       ),
-                      
+
                       // Trang 3: Lyrics
                       _buildLyricsView(),
                     ],
                   ),
-                  
+
                   // Điều chỉnh vị trí controls
                   AnimatedBuilder(
                     animation: _pageController,
                     builder: (context, child) {
                       final page = _pageController.page ?? 1;
-                      final distance = (page - 1).abs(); // Khoảng cách so với trang giữa
-                      
+                      final distance =
+                          (page - 1).abs(); // Khoảng cách so với trang giữa
+
                       // Vị trí cao nhất khi ở trang giữa
-                      final topPosition = MediaQuery.of(context).size.height * 0.50;
+                      final topPosition =
+                          MediaQuery.of(context).size.height * 0.50;
                       // Vị trí thấp nhất khi ở trang bên
-                      final bottomPosition = MediaQuery.of(context).size.height * 0.65;
-                      
+                      final bottomPosition =
+                          MediaQuery.of(context).size.height * 0.65;
+
                       // Tính toán vị trí dựa trên khoảng cách
-                      final top = topPosition + (bottomPosition - topPosition) * distance;
-                      
+                      final top = topPosition +
+                          (bottomPosition - topPosition) * distance;
+
                       return Positioned(
                         left: 0,
                         right: 0,
@@ -742,12 +781,14 @@ class _NowPlayingScreenState extends State<NowPlayingScreen>
                             mainAxisSize: MainAxisSize.min,
                             children: [
                               Padding(
-                                padding: const EdgeInsets.symmetric(horizontal: 24),
+                                padding:
+                                    const EdgeInsets.symmetric(horizontal: 24),
                                 child: _buildProgressBar(),
                               ),
                               const SizedBox(height: 32),
                               _buildControls(),
-                              const SizedBox(height: 32),
+                              const SizedBox(height: 16),
+                              _buildBottomActions(),
                             ],
                           ),
                         ),
@@ -762,4 +803,4 @@ class _NowPlayingScreenState extends State<NowPlayingScreen>
       ),
     );
   }
-} 
+}

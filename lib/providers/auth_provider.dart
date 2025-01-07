@@ -63,14 +63,18 @@ class AuthProvider with ChangeNotifier {
       _error = null;
       notifyListeners();
 
+      print('Calling login API...');
       final response = await _authService
           .login(LoginRequest(username: username, password: password));
+      print('Login response: $response');
+
       await _authService.saveToken(response.token);
       _isAuthenticated = true;
       _username = username;
 
       return true;
     } catch (e) {
+      print('Login error details: $e');
       _error = e.toString();
       return false;
     } finally {
