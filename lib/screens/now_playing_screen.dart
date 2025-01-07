@@ -6,6 +6,7 @@ import 'dart:async';
 import 'package:just_audio/just_audio.dart';
 import 'package:provider/provider.dart';
 import '../providers/spotify_provider.dart';
+import '../services/spotify_service.dart';
 
 enum PlayMode {
   none,        // Phát một lần rồi dừng
@@ -39,6 +40,8 @@ class _NowPlayingScreenState extends State<NowPlayingScreen>
   
   late AnimationController _rotationController;
   late Song _currentSong;
+  late SpotifyService _spotifyService;
+  bool _initialized = false;
   
   @override
   void initState() {
@@ -49,12 +52,19 @@ class _NowPlayingScreenState extends State<NowPlayingScreen>
     );
     
     _currentSong = widget.song;
-    
     _setupAudioPlayer();
-    _initializeAudio();
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _spotifyService = Provider.of<SpotifyProvider>(context, listen: false).spotifyService;
     
-    // Load lyrics sau khi màn hình đã được render
-    _loadLyrics();
+    if (!_initialized) {
+      _initializeAudio();
+      _loadLyrics();
+      _initialized = true;
+    }
   }
 
   Future<void> _loadLyrics() async {
@@ -79,8 +89,11 @@ class _NowPlayingScreenState extends State<NowPlayingScreen>
 
   Future<void> _initializeAudio() async {
     try {
-      final spotifyService = Provider.of<SpotifyProvider>(context, listen: false).spotifyService;
-      await spotifyService.playSpotifyTrack(_currentSong.spotifyId);
+      // Đảm bảo dừng bài hát đang phát (nếu có)
+      await _spotifyService.pauseTrack();
+      await Future.delayed(Duration(milliseconds: 500));
+      
+      await _spotifyService.playSpotifyTrack(_currentSong.spotifyId);
       setState(() {
         isPlaying = true;
         _position = Duration.zero;
@@ -143,9 +156,22 @@ class _NowPlayingScreenState extends State<NowPlayingScreen>
   
   @override
   void dispose() {
+    _stopPlayback();
     _audioPlayer.dispose();
     _rotationController.dispose();
     super.dispose();
+  }
+
+  Future<void> _stopPlayback() async {
+    if (isPlaying) {
+      try {
+        await _spotifyService.pauseTrack();
+        // Đợi một chút để đảm bảo lệnh pause được thực hiện
+        await Future.delayed(Duration(milliseconds: 300));
+      } catch (e) {
+        print('Error stopping playback: $e');
+      }
+    }
   }
 
   Widget _buildRotatingAlbumArt() {
@@ -343,26 +369,7 @@ class _NowPlayingScreenState extends State<NowPlayingScreen>
           onPressed: () {},
         ),
         GestureDetector(
-          onTap: () async {
-            if (_currentSong.filePath.isEmpty) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Không có bản preview cho bài hát này')),
-              );
-              return;
-            }
-            
-            setState(() {
-              isPlaying = !isPlaying;
-            });
-            
-            if (isPlaying) {
-              await _audioPlayer.play();
-              _rotationController.repeat();
-            } else {
-              await _audioPlayer.pause();
-              _rotationController.stop();
-            }
-          },
+          onTap: _togglePlayPause,
           child: Container(
             width: 70,
             height: 70,
@@ -531,28 +538,34 @@ class _NowPlayingScreenState extends State<NowPlayingScreen>
 
   Future<void> _togglePlayPause() async {
     try {
-      final spotifyService = Provider.of<SpotifyProvider>(context, listen: false).spotifyService;
-      
       if (isPlaying) {
-        await spotifyService.pauseTrack();
+        await _spotifyService.pauseTrack();
+        if (mounted) {
+          setState(() {
+            isPlaying = false;
+            _rotationController.stop();
+          });
+        }
       } else {
         if (_position.inSeconds == 0) {
           await _initializeAudio();
         } else {
-          await spotifyService.resumeTrack();
+          await _spotifyService.resumeTrack();
+          if (mounted) {
+            setState(() {
+              isPlaying = true;
+              _rotationController.repeat();
+            });
+          }
         }
       }
-      
-      setState(() {
-        isPlaying = !isPlaying;
-        if (isPlaying) {
-          _rotationController.repeat();
-        } else {
-          _rotationController.stop();
-        }
-      });
     } catch (e) {
       print('Error toggling play/pause: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Không thể ${isPlaying ? "dừng" : "phát"} bài hát')),
+        );
+      }
     }
   }
 
