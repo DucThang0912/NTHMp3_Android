@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:nthmusicmp3/services/song_service.dart';
 import '../constants/colors.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../models/song.dart';
@@ -10,6 +11,7 @@ import '../services/spotify_service.dart';
 import 'dart:math';
 import '../mixins/timer_mixin.dart';
 import 'playlist/add_to_playlist_bottom_sheet.dart';
+import '../services/play_history_service.dart';
 
 enum PlayMode {
   none, // Phát một lần rồi dừng
@@ -51,6 +53,7 @@ class _NowPlayingScreenState extends State<NowPlayingScreen>
   bool _initialized = false;
   late List<Song> _playlist;
   late int _currentIndex;
+  final PlayHistoryService _playHistoryService = PlayHistoryService();
 
   @override
   void initState() {
@@ -66,6 +69,7 @@ class _NowPlayingScreenState extends State<NowPlayingScreen>
     addController(_rotationController);
 
     _setupAudioPlayer();
+    _checkFavoriteStatus();
   }
 
   @override
@@ -102,6 +106,7 @@ class _NowPlayingScreenState extends State<NowPlayingScreen>
     }
   }
 
+  // Khởi tạo AudioPlayer và phát bài hát
   Future<void> _initializeAudio() async {
     try {
       // Dừng bài đang phát
@@ -127,6 +132,7 @@ class _NowPlayingScreenState extends State<NowPlayingScreen>
     }
   }
 
+  // Thiết lập AudioPlayer
   void _setupAudioPlayer() {
     createPeriodicTimer(const Duration(milliseconds: 500), (timer) {
       if (!mounted || !isPlaying) return;
@@ -158,6 +164,7 @@ class _NowPlayingScreenState extends State<NowPlayingScreen>
     _duration = Duration(seconds: _currentSong.duration);
   }
 
+  // Xử lý khi bài hát kết thúc
   void _handleSongEnd() async {
     switch (_playMode) {
       case PlayMode.none:
@@ -207,6 +214,7 @@ class _NowPlayingScreenState extends State<NowPlayingScreen>
     super.dispose();
   }
 
+  // Dừng phát nhạc
   Future<void> _stopPlayback() async {
     if (isPlaying) {
       try {
@@ -219,6 +227,7 @@ class _NowPlayingScreenState extends State<NowPlayingScreen>
     }
   }
 
+  // Xây dựng hình ảnh album quay
   Widget _buildRotatingAlbumArt() {
     return AnimatedBuilder(
       animation: _rotationController,
@@ -302,6 +311,7 @@ class _NowPlayingScreenState extends State<NowPlayingScreen>
     );
   }
 
+  // Xây dựng thông tin bài hát
   Widget _buildMusicInfo() {
     return Column(
       mainAxisSize: MainAxisSize.min,
@@ -331,6 +341,7 @@ class _NowPlayingScreenState extends State<NowPlayingScreen>
     );
   }
 
+  // Xây dựng thanh tiến trình phát nhạc
   Widget _buildProgressBar() {
     String _formatDuration(Duration duration) {
       String twoDigits(int n) => n.toString().padLeft(2, '0');
@@ -396,6 +407,7 @@ class _NowPlayingScreenState extends State<NowPlayingScreen>
     );
   }
 
+  // Xây dựng các nút điều khiển
   Widget _buildControls() {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
@@ -407,10 +419,10 @@ class _NowPlayingScreenState extends State<NowPlayingScreen>
             color: isFavorite ? Colors.purple : Colors.white,
             size: 30,
           ),
-          onPressed: () {
-            setState(() {
-              isFavorite = !isFavorite;
-            });
+          onPressed: () async {
+            await _toggleFavorite();
+            // Cập nhật UI ngay sau khi toggle
+            setState(() {});
           },
         ),
         // Nút phát trước
@@ -482,6 +494,7 @@ class _NowPlayingScreenState extends State<NowPlayingScreen>
     );
   }
 
+  // Xây dựng các nút hành động bên dưới
   Widget _buildBottomActions() {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
@@ -497,6 +510,7 @@ class _NowPlayingScreenState extends State<NowPlayingScreen>
     );
   }
 
+  // Xây dựng nút hành động
   Widget _buildActionButton(IconData icon, String label) {
     return Column(
       mainAxisSize: MainAxisSize.min,
@@ -527,6 +541,7 @@ class _NowPlayingScreenState extends State<NowPlayingScreen>
     );
   }
 
+  // Xây dựng view lời bài hát
   Widget _buildLyricsView() {
     return SingleChildScrollView(
       padding: const EdgeInsets.fromLTRB(24, 24, 24, 200),
@@ -555,6 +570,7 @@ class _NowPlayingScreenState extends State<NowPlayingScreen>
     );
   }
 
+  // Xây dựng header
   Widget _buildHeader() {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -601,6 +617,7 @@ class _NowPlayingScreenState extends State<NowPlayingScreen>
         : AppColors.glowColors['blue']!;
   }
 
+  // Toggle phát/dừng bài hát
   Future<void> _togglePlayPause() async {
     try {
       if (isPlaying) {
@@ -636,6 +653,7 @@ class _NowPlayingScreenState extends State<NowPlayingScreen>
     }
   }
 
+  // Phát bài hát tiếp theo
   Future<void> _playNext() async {
     if (_currentIndex < _playlist.length - 1) {
       _currentIndex++;
@@ -646,6 +664,7 @@ class _NowPlayingScreenState extends State<NowPlayingScreen>
     }
   }
 
+  // Phát bài hát trước
   Future<void> _playPrevious() async {
     if (_currentIndex > 0) {
       _currentIndex--;
@@ -656,6 +675,7 @@ class _NowPlayingScreenState extends State<NowPlayingScreen>
     }
   }
 
+  // Xây dựng danh sách phát
   Widget _buildPlaylistView() {
     return ListView.builder(
       padding: const EdgeInsets.fromLTRB(24, 24, 24, 200),
@@ -720,6 +740,69 @@ class _NowPlayingScreenState extends State<NowPlayingScreen>
       backgroundColor: AppColors.background,
       builder: (context) => AddToPlaylistBottomSheet(song: _currentSong),
     );
+  }
+
+  // Kiểm tra trạng thái yêu thích
+  Future<void> _checkFavoriteStatus() async {
+    try {
+      final favorites = await _playHistoryService.getFavorites();
+      print('Current favorites: ${favorites.map((s) => s.spotifyId).toList()}');
+      print('Checking favorite for spotifyId: ${_currentSong.spotifyId}');
+
+      if (mounted) {
+        setState(() {
+          isFavorite =
+              favorites.any((song) => song.spotifyId == _currentSong.spotifyId);
+        });
+        print('Is favorite: $isFavorite');
+      }
+    } catch (e) {
+      print('Error checking favorite status: $e');
+    }
+  }
+
+  // Toggle yêu thích bài hát
+  Future<void> _toggleFavorite() async {
+    try {
+      print('Current song spotifyId: ${_currentSong.spotifyId}');
+
+      // Kiểm tra và lưu bài hát nếu chưa có
+      try {
+        final songService = SongService();
+        await songService.getSongBySpotifyId(_currentSong.spotifyId);
+      } catch (e) {
+        print('Song not found, saving to database first');
+        final songService = SongService();
+        await songService.saveSongToDatabase(_currentSong);
+      }
+
+      final result =
+          await _playHistoryService.toggleFavorite(_currentSong.spotifyId);
+      print('Toggle favorite result: $result');
+
+      if (mounted) {
+        setState(() {
+          isFavorite = result;
+        });
+
+        await _checkFavoriteStatus();
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+                result ? 'Đã thêm vào yêu thích' : 'Đã xóa khỏi yêu thích'),
+            duration: const Duration(seconds: 1),
+          ),
+        );
+      }
+    } catch (e) {
+      print('Error toggling favorite: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Lỗi: $e')),
+        );
+      }
+    }
   }
 
   @override

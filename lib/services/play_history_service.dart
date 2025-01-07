@@ -36,11 +36,18 @@ class PlayHistoryService {
   }
 
   // Toggle yêu thích bài hát
-  Future<bool> toggleFavorite(int songId) async {
+  Future<bool> toggleFavorite(String spotifyId) async {
     try {
-      final response =
-          await _apiService.post('history/favorite/toggle/$songId', {});
-      return response as bool;
+      if (spotifyId.isEmpty) {
+        throw Exception('SpotifyId không được rỗng');
+      }
+
+      final response = await _apiService.post(
+        'history/favorite/toggle/$spotifyId',
+        {},
+      );
+
+      return response == true;
     } catch (e) {
       print('Error toggling favorite: $e');
       rethrow;
@@ -51,7 +58,28 @@ class PlayHistoryService {
   Future<List<Song>> getFavorites() async {
     try {
       final json = await _apiService.get('history/favorites');
-      return (json as List).map((item) => Song.fromJson(item['song'])).toList();
+      print('Raw favorites response: $json'); // Debug log
+
+      if (json == null) return [];
+
+      final List<Song> favorites = [];
+      for (var item in json) {
+        if (item is Map) {
+          // Nếu response có cấu trúc { song: {...} }
+          final songData = item.containsKey('song') ? item['song'] : item;
+          try {
+            final song = Song.fromJson(songData);
+            if (song.spotifyId.isNotEmpty) {
+              favorites.add(song);
+            }
+          } catch (e) {
+            print('Error parsing song: $e');
+          }
+        }
+      }
+
+      print('Parsed favorites: ${favorites.map((s) => s.spotifyId).toList()}');
+      return favorites;
     } catch (e) {
       print('Error getting favorites: $e');
       return [];

@@ -54,7 +54,21 @@ class _AddToPlaylistBottomSheetState extends State<AddToPlaylistBottomSheet> {
   Future<void> _addToPlaylist(Playlist playlist) async {
     try {
       // Lưu bài hát vào CSDL trước
-      final songId = await _songService.saveSongToDatabase(widget.song);
+      final songService = SongService();
+      int? songId;
+
+      try {
+        final existingSong =
+            await songService.getSongBySpotifyId(widget.song.spotifyId);
+        songId = existingSong.id;
+      } catch (e) {
+        print('Song not found, saving to database first');
+        songId = await songService.saveSongToDatabase(widget.song);
+      }
+
+      if (songId == null) {
+        throw Exception('Không thể lưu bài hát');
+      }
 
       // Sau đó thêm vào playlist
       await _playlistService.addSongToPlaylist(playlist.id!, songId);
@@ -71,7 +85,7 @@ class _AddToPlaylistBottomSheetState extends State<AddToPlaylistBottomSheet> {
       print('Error adding to playlist: $e');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Lỗi khi thêm vào playlist: $e')),
+          SnackBar(content: Text('Lỗi: $e')),
         );
       }
     }

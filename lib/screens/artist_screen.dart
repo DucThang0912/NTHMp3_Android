@@ -31,12 +31,14 @@ class _ArtistScreenState extends State<ArtistScreen> {
 
   Future<void> _loadArtistDetails() async {
     if (!mounted) return;
-    
+
     try {
-      final spotifyProvider = Provider.of<SpotifyProvider>(context, listen: false);
-      final artist = await spotifyProvider.spotifyService.getArtistDetails(widget.artistId);
+      final spotifyProvider =
+          Provider.of<SpotifyProvider>(context, listen: false);
+      final artist = await spotifyProvider.spotifyService
+          .getArtistDetails(widget.artistId);
       print('Loaded artist data: ${artist.toJson()}');
-      
+
       if (mounted) {
         setState(() {
           _artist = artist;
@@ -265,7 +267,13 @@ class _ArtistScreenState extends State<ArtistScreen> {
                           Navigator.push(
                             context,
                             MaterialPageRoute(
-                              builder: (context) => AlbumScreen(album: album),
+                              builder: (context) => AlbumScreen(
+                                album: album,
+                                spotifyService: Provider.of<SpotifyProvider>(
+                                        context,
+                                        listen: false)
+                                    .spotifyService,
+                              ),
                             ),
                           );
                         },
@@ -332,4 +340,4 @@ class _ArtistScreenState extends State<ArtistScreen> {
       ),
     );
   }
-} 
+}

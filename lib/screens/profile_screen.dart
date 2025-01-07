@@ -6,6 +6,7 @@ import '../providers/auth_provider.dart';
 import 'login_screen.dart';
 import '../widgets/main_screen_bottom_nav.dart';
 import 'profile_details_screen.dart';
+import 'library_screen.dart';
 
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
@@ -61,14 +62,26 @@ class ProfileScreen extends StatelessWidget {
               icon: Icons.favorite_outline,
               title: 'Bài hát yêu thích',
               onTap: () {
-                // TODO: Navigate to favorite songs
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) =>
+                        const LibraryScreen(initialTabIndex: 1),
+                  ),
+                );
               },
             ),
             _buildProfileMenuItem(
               icon: Icons.playlist_play,
               title: 'Playlist của tôi',
               onTap: () {
-                // TODO: Navigate to my playlists
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) =>
+                        const LibraryScreen(initialTabIndex: 0),
+                  ),
+                );
               },
             ),
             _buildProfileMenuItem(

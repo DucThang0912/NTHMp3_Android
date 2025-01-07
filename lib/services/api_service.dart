@@ -50,7 +50,17 @@ class ApiService {
 
       // Chấp nhận cả status 200 và 201
       if (response.statusCode == 200 || response.statusCode == 201) {
-        return jsonDecode(response.body);
+        if (response.body.isEmpty) return null;
+
+        // Parse response body
+        final responseData = jsonDecode(response.body);
+
+        // Nếu endpoint là toggle favorite, trả về giá trị boolean trực tiếp
+        if (endpoint.contains('history/favorite/toggle')) {
+          return responseData;
+        }
+
+        return responseData;
       } else {
         throw Exception('Request failed with status: ${response.statusCode}');
       }

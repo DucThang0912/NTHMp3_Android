@@ -3,10 +3,17 @@ import '../constants/colors.dart';
 import 'now_playing_screen.dart';
 import '../models/album.dart';
 import 'package:google_fonts/google_fonts.dart';
+import '../services/spotify_service.dart';
 
 class AlbumScreen extends StatefulWidget {
   final Album album;
-  const AlbumScreen({super.key, required this.album});
+  final SpotifyService spotifyService;
+
+  const AlbumScreen({
+    super.key,
+    required this.album,
+    required this.spotifyService,
+  });
 
   @override
   State<AlbumScreen> createState() => _AlbumScreenState();
@@ -73,7 +80,8 @@ class _AlbumScreenState extends State<AlbumScreen> {
                         : null,
                   ),
                   child: widget.album.coverImageUrl == null
-                      ? const Icon(Icons.music_note, color: Colors.white, size: 80)
+                      ? const Icon(Icons.music_note,
+                          color: Colors.white, size: 80)
                       : null,
                 ),
               ),
@@ -159,7 +167,8 @@ class _AlbumScreenState extends State<AlbumScreen> {
       itemBuilder: (context, index) {
         final song = widget.album.songs![index];
         return ListTile(
-          contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+          contentPadding:
+              const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
           leading: Container(
             width: 40,
             height: 40,
@@ -232,7 +241,8 @@ class _AlbumScreenState extends State<AlbumScreen> {
         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
         children: [
           IconButton(
-            icon: const Icon(Icons.shuffle_rounded, color: Colors.white, size: 28),
+            icon: const Icon(Icons.shuffle_rounded,
+                color: Colors.white, size: 28),
             onPressed: () {},
           ),
           Container(
@@ -260,7 +270,8 @@ class _AlbumScreenState extends State<AlbumScreen> {
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Icon(Icons.play_arrow_rounded, color: Colors.white, size: 30),
+                      Icon(Icons.play_arrow_rounded,
+                          color: Colors.white, size: 30),
                       SizedBox(width: 8),
                       Text(
                         'Phát tất cả',
@@ -277,7 +288,8 @@ class _AlbumScreenState extends State<AlbumScreen> {
             ),
           ),
           IconButton(
-            icon: const Icon(Icons.favorite_border_rounded, color: Colors.white, size: 28),
+            icon: const Icon(Icons.favorite_border_rounded,
+                color: Colors.white, size: 28),
             onPressed: () {},
           ),
         ],
@@ -301,4 +313,4 @@ class _AlbumScreenState extends State<AlbumScreen> {
       ),
     );
   }
-} 
+}

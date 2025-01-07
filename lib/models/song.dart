@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'base_model.dart';
 
 class Song extends BaseModel {
@@ -38,20 +40,29 @@ class Song extends BaseModel {
     this.imageUrl,
   }) : _spotifyId = id;
 
+  String? _decodeUtf8(dynamic text) {
+    if (text == null) return null;
+    try {
+      return utf8.decode(latin1.encode(text.toString()));
+    } catch (e) {
+      return text.toString();
+    }
+  }
+
   Song.fromJson(Map<String, dynamic> json)
       : _spotifyId = json['spotifyId'] as String? ?? '' {
     id = json['id'] as int?;
-    title = json['title'] as String? ?? 'Unknown Title';
-    artistName = json['artistName'] as String? ?? 'Unknown Artist';
+    title = _decodeUtf8(json['title']) ?? 'Unknown Title';
+    artistName = _decodeUtf8(json['artistName']) ?? 'Unknown Artist';
     artistId = json['artistId'] as int? ?? 0;
-    albumTitle = json['albumTitle'] as String?;
+    albumTitle = _decodeUtf8(json['albumTitle']);
     albumId = json['albumId'] as int?;
-    genreName = json['genreName'] as String? ?? 'Unknown Genre';
+    genreName = _decodeUtf8(json['genreName']) ?? 'Unknown Genre';
     genreId = json['genreId'] as int? ?? 0;
     duration = json['duration'] as int? ?? 0;
     filePath = json['previewUrl'] as String? ?? '';
     imageUrl = json['imageUrl'] as String?;
-    lyrics = json['lyrics'] as String?;
+    lyrics = _decodeUtf8(json['lyrics']);
     playCount = json['playCount'] as int?;
   }
 

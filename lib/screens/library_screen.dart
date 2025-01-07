@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:nthmusicmp3/models/playlist.dart';
+import 'package:nthmusicmp3/models/song.dart';
 import 'package:nthmusicmp3/services/playlist_service.dart';
+import 'package:nthmusicmp3/services/spotify_service.dart';
 import '../constants/colors.dart';
 import '../models/album.dart';
 import '../models/artist.dart';
@@ -8,10 +10,18 @@ import '../screens/playlist/playlist_screen.dart';
 import '../screens/album_screen.dart';
 import '../widgets/main_screen_bottom_nav.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'dart:math';
+import 'package:nthmusicmp3/services/play_history_service.dart';
+import '../screens/now_playing_screen.dart';
+import 'package:provider/provider.dart';
+import 'package:nthmusicmp3/providers/spotify_provider.dart';
 
 class LibraryScreen extends StatefulWidget {
-  const LibraryScreen({super.key});
+  final int initialTabIndex;
+
+  const LibraryScreen({
+    super.key,
+    this.initialTabIndex = 0,
+  });
 
   @override
   State<LibraryScreen> createState() => _LibraryScreenState();
@@ -25,6 +35,7 @@ class _LibraryScreenState extends State<LibraryScreen>
   void initState() {
     super.initState();
     _tabController = TabController(length: 4, vsync: this);
+    _tabController.index = widget.initialTabIndex;
   }
 
   @override
@@ -263,66 +274,97 @@ class _PlaylistTabState extends State<_PlaylistTab> {
   }
 }
 
-class _SongsTab extends StatelessWidget {
+class _SongsTab extends StatefulWidget {
+  @override
+  State<_SongsTab> createState() => _SongsTabState();
+}
+
+class _SongsTabState extends State<_SongsTab> {
+  final PlayHistoryService _playHistoryService = PlayHistoryService();
+  List<Song> _favoriteSongs = [];
+  bool _isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadFavoriteSongs();
+  }
+
+  Future<void> _loadFavoriteSongs() async {
+    try {
+      setState(() => _isLoading = true);
+      final songs = await _playHistoryService.getFavorites();
+      if (mounted) {
+        setState(() {
+          _favoriteSongs = songs;
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      print('Error loading favorite songs: $e');
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
+    if (_isLoading) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
+    if (_favoriteSongs.isEmpty) {
+      return const Center(
+        child: Text(
+          'Chưa có bài hát yêu thích nào',
+          style: TextStyle(color: Colors.white),
+        ),
+      );
+    }
+
     return ListView.builder(
       padding: const EdgeInsets.all(16),
-      itemCount: 20,
+      itemCount: _favoriteSongs.length,
       itemBuilder: (context, index) {
-        return GestureDetector(
-          // onTap: () {
-          //   Navigator.push(
-          //     context,
-          //     MaterialPageRoute(
-          //       builder: (context) => const NowPlayingScreen(),
-          //     ),
-          //   );
-          // },
-          child: Container(
-            margin: const EdgeInsets.only(bottom: 8),
-            decoration: BoxDecoration(
-              color: AppColors.surface.withOpacity(0.5),
-              borderRadius: BorderRadius.circular(8),
+        final song = _favoriteSongs[index];
+        return Container(
+          margin: const EdgeInsets.only(bottom: 8),
+          decoration: BoxDecoration(
+            color: AppColors.surface.withOpacity(0.5),
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: ListTile(
+            leading: ClipRRect(
+              borderRadius: BorderRadius.circular(4),
+              child: song.imageUrl != null && song.imageUrl!.isNotEmpty
+                  ? Image.network(song.imageUrl!,
+                      width: 48, height: 48, fit: BoxFit.cover)
+                  : Container(
+                      width: 48,
+                      height: 48,
+                      color: Colors.grey,
+                      child: const Icon(Icons.music_note),
+                    ),
             ),
-            child: ListTile(
-              leading: ClipRRect(
-                borderRadius: BorderRadius.circular(4),
-                child: Container(
-                  width: 40,
-                  height: 40,
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                      colors: [
-                        Colors.purple.withOpacity(0.7),
-                        Colors.blue.withOpacity(0.7),
-                      ],
-                    ),
-                  ),
-                  child: const Center(
-                    child: Icon(
-                      Icons.music_note,
-                      color: Colors.white,
-                      size: 20,
-                    ),
+            title:
+                Text(song.title, style: const TextStyle(color: Colors.white)),
+            subtitle: Text(song.artistName,
+                style: const TextStyle(color: Colors.grey)),
+            onTap: () async {
+              await Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => NowPlayingScreen(
+                    song: song,
+                    playlist: _favoriteSongs,
+                    currentIndex: index,
                   ),
                 ),
-              ),
-              title: const Text(
-                'Tên bài hát',
-                style: TextStyle(color: Colors.white),
-              ),
-              subtitle: Text(
-                'Nghệ sĩ',
-                style: TextStyle(color: Colors.grey[400]),
-              ),
-              trailing: IconButton(
-                icon: const Icon(Icons.more_vert, color: Colors.grey),
-                onPressed: () {},
-              ),
-            ),
+              );
+              // Refresh danh sách khi quay lại
+              _loadFavoriteSongs();
+            },
           ),
         );
       },
@@ -330,30 +372,68 @@ class _SongsTab extends StatelessWidget {
   }
 }
 
-class _AlbumsTab extends StatelessWidget {
+class _AlbumsTab extends StatefulWidget {
+  @override
+  State<_AlbumsTab> createState() => _AlbumsTabState();
+}
+
+class _AlbumsTabState extends State<_AlbumsTab> {
+  late final SpotifyService _spotifyService;
+  List<Album> _albums = [];
+  bool _isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _spotifyService =
+        Provider.of<SpotifyProvider>(context, listen: false).spotifyService;
+    _loadAlbums();
+  }
+
+  Future<void> _loadAlbums() async {
+    try {
+      setState(() => _isLoading = true);
+      final albums =
+          await _spotifyService.getArtistAlbums('1dfeR4HaWDbWqFHLkxsg1d');
+      if (mounted) {
+        setState(() {
+          _albums = albums;
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      print('Error loading albums: $e');
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
+    if (_isLoading) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
     return GridView.builder(
       padding: const EdgeInsets.all(16),
       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
         crossAxisCount: 2,
-        childAspectRatio: 0.8,
-        crossAxisSpacing: 12,
-        mainAxisSpacing: 12,
+        childAspectRatio: 0.7,
+        crossAxisSpacing: 16,
+        mainAxisSpacing: 16,
       ),
-      itemCount: 10,
+      itemCount: _albums.length,
       itemBuilder: (context, index) {
+        final album = _albums[index];
         return GestureDetector(
           onTap: () {
             Navigator.push(
               context,
               MaterialPageRoute(
                 builder: (context) => AlbumScreen(
-                  album: Album(
-                    id: 0,
-                    title: 'Sample Album',
-                    artist: Artist(id: '0', name: 'Sample Artist'),
-                  ),
+                  album: album,
+                  spotifyService: _spotifyService,
                 ),
               ),
             );
@@ -371,52 +451,64 @@ class _AlbumsTab extends StatelessWidget {
               ],
             ),
             child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 Expanded(
-                  child: ClipRRect(
-                    borderRadius: const BorderRadius.vertical(
-                      top: Radius.circular(12),
+                  flex: 3,
+                  child: Container(
+                    decoration: BoxDecoration(
+                      borderRadius:
+                          const BorderRadius.vertical(top: Radius.circular(12)),
+                      image: album.coverImageUrl != null
+                          ? DecorationImage(
+                              image: NetworkImage(album.coverImageUrl!),
+                              fit: BoxFit.cover,
+                            )
+                          : null,
                     ),
-                    child: Container(
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                          colors: [
-                            Colors.purple.withOpacity(0.7),
-                            Colors.blue.withOpacity(0.7),
-                          ],
-                        ),
-                      ),
-                      child: const Center(
-                        child: Icon(
-                          Icons.music_note,
-                          color: Colors.white,
-                          size: 40,
-                        ),
-                      ),
-                    ),
+                    child: album.coverImageUrl == null
+                        ? const Icon(Icons.album, color: Colors.white, size: 40)
+                        : null,
                   ),
                 ),
-                Padding(
-                  padding: const EdgeInsets.all(12),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Album ${index + 1}',
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.bold,
+                Expanded(
+                  flex: 2,
+                  child: Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Text(
+                          album.title ?? 'Unknown Title',
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 14,
+                          ),
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
                         ),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        'Nghệ sĩ',
-                        style: TextStyle(color: Colors.grey[400]),
-                      ),
-                    ],
+                        const SizedBox(height: 4),
+                        Text(
+                          album.artist?.name ?? 'Unknown Artist',
+                          style: TextStyle(
+                            color: Colors.grey[400],
+                            fontSize: 12,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          '${album.releaseYear}',
+                          style: TextStyle(
+                            color: Colors.grey[600],
+                            fontSize: 12,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ],
@@ -428,9 +520,48 @@ class _AlbumsTab extends StatelessWidget {
   }
 }
 
-class _ArtistsTab extends StatelessWidget {
+class _ArtistsTab extends StatefulWidget {
+  @override
+  State<_ArtistsTab> createState() => _ArtistsTabState();
+}
+
+class _ArtistsTabState extends State<_ArtistsTab> {
+  late final SpotifyService _spotifyService;
+  List<Artist> _artists = [];
+  bool _isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _spotifyService =
+        Provider.of<SpotifyProvider>(context, listen: false).spotifyService;
+    _loadArtists();
+  }
+
+  Future<void> _loadArtists() async {
+    try {
+      setState(() => _isLoading = true);
+      final artists = await _spotifyService.getTopArtists();
+      if (mounted) {
+        setState(() {
+          _artists = artists;
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      print('Error loading artists: $e');
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
+    if (_isLoading) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
     return GridView.builder(
       padding: const EdgeInsets.all(16),
       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
@@ -439,69 +570,36 @@ class _ArtistsTab extends StatelessWidget {
         crossAxisSpacing: 12,
         mainAxisSpacing: 12,
       ),
-      itemCount: 10,
+      itemCount: _artists.length,
       itemBuilder: (context, index) {
-        return GestureDetector(
-          // onTap: () {
-          //   Navigator.push(
-          //     context,
-          //     MaterialPageRoute(
-          //       builder: (context) => const ArtistScreen(),
-          //     ),
-          //   );
-          // },
-          child: Container(
-            decoration: BoxDecoration(
-              color: AppColors.surface,
-              borderRadius: BorderRadius.circular(12),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.1),
-                  blurRadius: 8,
-                  offset: const Offset(0, 2),
+        final artist = _artists[index];
+        return Container(
+          decoration: BoxDecoration(
+            color: AppColors.surface,
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              CircleAvatar(
+                radius: 40,
+                backgroundImage: artist.avatarUrl != null
+                    ? NetworkImage(artist.avatarUrl!)
+                    : null,
+                child: artist.avatarUrl == null
+                    ? const Icon(Icons.person, size: 40)
+                    : null,
+              ),
+              const SizedBox(height: 8),
+              Text(
+                artist.name ?? 'Unknown Artist',
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
                 ),
-              ],
-            ),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Container(
-                  width: 80,
-                  height: 80,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    gradient: LinearGradient(
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                      colors: [
-                        Colors.purple.withOpacity(0.7),
-                        Colors.blue.withOpacity(0.7),
-                      ],
-                    ),
-                  ),
-                  child: const Center(
-                    child: Icon(
-                      Icons.music_note,
-                      color: Colors.white,
-                      size: 40,
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 12),
-                Text(
-                  'Nghệ sĩ ${index + 1}',
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  '${Random().nextInt(100) + 1} bài hát',
-                  style: TextStyle(color: Colors.grey[400]),
-                ),
-              ],
-            ),
+                textAlign: TextAlign.center,
+              ),
+            ],
           ),
         );
       },
