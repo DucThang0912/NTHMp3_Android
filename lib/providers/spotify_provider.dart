@@ -10,4 +10,10 @@ class SpotifyProvider extends ChangeNotifier {
       clientSecret: clientSecret,
     );
   }
+
+  @override
+  void dispose() {
+    spotifyService.dispose();
+    super.dispose();
+  }
 } 

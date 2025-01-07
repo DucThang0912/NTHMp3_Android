@@ -8,6 +8,7 @@ import '../services/spotify_service.dart';
 import '../models/genre.dart';
 import '../models/song.dart';
 import '../providers/spotify_provider.dart';
+import '../mixins/timer_mixin.dart';
 
 class SearchScreen extends StatefulWidget {
   const SearchScreen({super.key});
@@ -16,7 +17,8 @@ class SearchScreen extends StatefulWidget {
   State<SearchScreen> createState() => _SearchScreenState();
 }
 
-class _SearchScreenState extends State<SearchScreen> with SingleTickerProviderStateMixin {
+class _SearchScreenState extends State<SearchScreen> 
+    with SingleTickerProviderStateMixin, TimerMixin {
   final TextEditingController _searchController = TextEditingController();
   bool _isSearching = false;
   late AnimationController _animationController;
@@ -35,6 +37,7 @@ class _SearchScreenState extends State<SearchScreen> with SingleTickerProviderSt
       duration: const Duration(milliseconds: 1500),
       vsync: this,
     )..repeat(reverse: true);
+    addController(_animationController);
     
     _animation = Tween<double>(begin: 0, end: 1).animate(
       CurvedAnimation(parent: _animationController, curve: Curves.easeInOut),
@@ -85,23 +88,33 @@ class _SearchScreenState extends State<SearchScreen> with SingleTickerProviderSt
               color: Colors.white,
               fontSize: 14,
             ),
-            onChanged: (value) async {
+            onChanged: (value) {
+              if (!mounted) return;
+              
               setState(() {
                 _isSearching = value.isNotEmpty;
                 _isSearchLoading = value.isNotEmpty;
               });
               
               if (value.isNotEmpty) {
-                try {
-                  final results = await _spotifyService.searchSongs(value);
-                  setState(() {
-                    _searchResults = results;
-                    _isSearchLoading = false;
-                  });
-                } catch (e) {
-                  print('Error searching songs: $e');
-                  setState(() => _isSearchLoading = false);
-                }
+                Future.delayed(const Duration(milliseconds: 500), () async {
+                  if (!mounted) return;
+                  
+                  try {
+                    final results = await _spotifyService.searchSongs(value);
+                    if (mounted) {
+                      setState(() {
+                        _searchResults = results;
+                        _isSearchLoading = false;
+                      });
+                    }
+                  } catch (e) {
+                    print('Error searching songs: $e');
+                    if (mounted) {
+                      setState(() => _isSearchLoading = false);
+                    }
+                  }
+                });
               }
             },
             decoration: InputDecoration(
@@ -353,6 +366,7 @@ class _SearchScreenState extends State<SearchScreen> with SingleTickerProviderSt
             overflow: TextOverflow.ellipsis,
           ),
           onTap: () {
+            _animationController.stop();
             Navigator.push(
               context,
               MaterialPageRoute(
@@ -371,7 +385,6 @@ class _SearchScreenState extends State<SearchScreen> with SingleTickerProviderSt
 
   @override
   void dispose() {
-    _animationController.dispose();
     _searchController.dispose();
     super.dispose();
   }

@@ -13,6 +13,8 @@ class SpotifyService {
   final String clientSecret;
   String? _accessToken;
   static const platform = MethodChannel('com.example.nthmusicmp3/spotify');
+  Timer? _connectionCheckTimer;
+  bool _isInitialized = false;
 
   SpotifyService({
     required this.clientId,
@@ -23,18 +25,46 @@ class SpotifyService {
   }
 
   Future<void> _initSpotifySDK() async {
+    if (_isInitialized) return;
+    
     try {
       final isConnected = await platform.invokeMethod<bool>('isSpotifyConnected') ?? false;
       if (!isConnected) {
         await Future.delayed(Duration(milliseconds: 500));
-        final result = await platform.invokeMethod('connectSpotify');
-        print('Spotify connected: $result');
+        await platform.invokeMethod('connectSpotify');
       }
+      _startConnectionCheck();
+      _isInitialized = true;
     } catch (e) {
-      if (e is! MissingPluginException) {
-        print('Error initializing Spotify SDK: $e');
-      }
+      print('Error initializing Spotify SDK: $e');
     }
+  }
+
+  void _startConnectionCheck() {
+    _connectionCheckTimer?.cancel();
+    if (_isInitialized == false) return;
+    
+    _connectionCheckTimer = Timer.periodic(const Duration(seconds: 30), (timer) async {
+      if (_isInitialized == false) {
+        timer.cancel();
+        return;
+      }
+      
+      try {
+        final isConnected = await platform.invokeMethod<bool>('isSpotifyConnected') ?? false;
+        if (!isConnected) {
+          await _initSpotifySDK();
+        }
+      } catch (e) {
+        print('Connection check error: $e');
+      }
+    });
+  }
+
+  void dispose() {
+    _connectionCheckTimer?.cancel();
+    _connectionCheckTimer = null;
+    _isInitialized = false;
   }
 
   Future<void> playSpotifyTrack(String spotifyId) async {

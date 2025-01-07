@@ -8,6 +8,7 @@ import 'package:provider/provider.dart';
 import '../providers/spotify_provider.dart';
 import '../services/spotify_service.dart';
 import 'dart:math';
+import '../mixins/timer_mixin.dart';
 
 enum PlayMode {
   none,        // Phát một lần rồi dừng
@@ -33,7 +34,7 @@ class NowPlayingScreen extends StatefulWidget {
 }
 
 class _NowPlayingScreenState extends State<NowPlayingScreen> 
-    with SingleTickerProviderStateMixin {
+    with SingleTickerProviderStateMixin, TimerMixin {
   final AudioPlayer _audioPlayer = AudioPlayer();
   late PageController _pageController;
   Duration _duration = Duration.zero;
@@ -61,6 +62,7 @@ class _NowPlayingScreenState extends State<NowPlayingScreen>
       duration: const Duration(seconds: 10),
       vsync: this,
     );
+    addController(_rotationController);
     
     _setupAudioPlayer();
   }
@@ -122,35 +124,34 @@ class _NowPlayingScreenState extends State<NowPlayingScreen>
   }
 
   void _setupAudioPlayer() {
-    Timer.periodic(const Duration(milliseconds: 500), (timer) {
-      if (!mounted) {
-        timer.cancel();
-        return;
-      }
+    createPeriodicTimer(const Duration(milliseconds: 500), (timer) {
+      if (!mounted || !isPlaying) return;
       
-      if (isPlaying) {
-        setState(() {
-          _position = _position + const Duration(milliseconds: 500);
-          currentSliderValue = _position.inSeconds.toDouble();
-          
-          // Kiểm tra nếu bài hát đã kết thúc
-          if (_position >= _duration) {
-            _spotifyService.pauseTrack(); // Pause trước
+      final newPosition = _position + const Duration(milliseconds: 500);
+      if (newPosition >= _duration) {
+        _spotifyService.pauseTrack();
+        if (mounted) {
+          setState(() {
             isPlaying = false;
             _rotationController.stop();
-            Future.delayed(Duration(milliseconds: 500), () {
-              if (mounted) {
-                _handleSongEnd();
-              }
-            });
-          }
-        });
+          });
+          Future.delayed(const Duration(milliseconds: 500), () {
+            if (mounted) {
+              _handleSongEnd();
+            }
+          });
+        }
+      } else {
+        if (mounted) {
+          setState(() {
+            _position = newPosition;
+            currentSliderValue = _position.inSeconds.toDouble();
+          });
+        }
       }
     });
 
-    setState(() {
-      _duration = Duration(seconds: _currentSong.duration);
-    });
+    _duration = Duration(seconds: _currentSong.duration);
   }
 
   void _handleSongEnd() async {
@@ -196,9 +197,9 @@ class _NowPlayingScreenState extends State<NowPlayingScreen>
   
   @override
   void dispose() {
-    _stopPlayback();
+    _pageController.dispose();
     _audioPlayer.dispose();
-    _rotationController.dispose();
+    _stopPlayback();
     super.dispose();
   }
 
