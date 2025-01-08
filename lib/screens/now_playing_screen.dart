@@ -15,17 +15,17 @@ import '../services/play_history_service.dart';
 import '../providers/auth_provider.dart';
 
 enum PlayMode {
-  none,        // Phát một lần rồi dừng
-  sequential,  // Phát lần lượt
-  shuffle,     // Phát ngẫu nhiên
-  repeatOne    // Lặp lại một bài
+  none, // Phát một lần rồi dừng
+  sequential, // Phát lần lượt
+  shuffle, // Phát ngẫu nhiên
+  repeatOne // Lặp lại một bài
 }
 
 class NowPlayingScreen extends StatefulWidget {
   final Song song;
   final List<Song> playlist;
   final int currentIndex;
-  
+
   const NowPlayingScreen({
     super.key,
     required this.song,
@@ -37,7 +37,7 @@ class NowPlayingScreen extends StatefulWidget {
   State<NowPlayingScreen> createState() => _NowPlayingScreenState();
 }
 
-class _NowPlayingScreenState extends State<NowPlayingScreen> 
+class _NowPlayingScreenState extends State<NowPlayingScreen>
     with SingleTickerProviderStateMixin, TimerMixin {
   final AudioPlayer _audioPlayer = AudioPlayer();
   late PageController _pageController;
@@ -47,7 +47,7 @@ class _NowPlayingScreenState extends State<NowPlayingScreen>
   bool isFavorite = false;
   double currentSliderValue = 0;
   PlayMode _playMode = PlayMode.none;
-  
+
   late AnimationController _rotationController;
   late Song _currentSong;
   late SpotifyService _spotifyService;
@@ -61,7 +61,7 @@ class _NowPlayingScreenState extends State<NowPlayingScreen>
   int _songsPlayedCount = 0;
   bool _isPlayingAds = false;
   final AudioPlayer _adsPlayer = AudioPlayer();
-  
+
   @override
   void initState() {
     super.initState();
@@ -95,9 +95,10 @@ class _NowPlayingScreenState extends State<NowPlayingScreen>
   Future<void> _loadLyrics() async {
     // Delay một chút để đảm bảo nhạc đã bắt đầu phát
     await Future.delayed(Duration(seconds: 1));
-    
+
     if (mounted) {
-      final spotifyService = Provider.of<SpotifyProvider>(context, listen: false).spotifyService;
+      final spotifyService =
+          Provider.of<SpotifyProvider>(context, listen: false).spotifyService;
       try {
         final updatedSong = await spotifyService.loadSongDetails(_currentSong);
         if (mounted) {
@@ -178,12 +179,12 @@ class _NowPlayingScreenState extends State<NowPlayingScreen>
 
     // Tăng số bài đã phát
     _songsPlayedCount++;
-    
+
     // Kiểm tra điều kiện phát quảng cáo
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
-    final needsAds = !authProvider.isAuthenticated || 
-                    (authProvider.currentUser?.role?.id == 2);
-                    
+    final needsAds = !authProvider.isAuthenticated ||
+        (authProvider.currentUser?.role?.id == 2);
+
     if (needsAds && _songsPlayedCount >= 2 && !_isPlayingAds) {
       // Phát quảng cáo
       await _playAds();
@@ -219,7 +220,7 @@ class _NowPlayingScreenState extends State<NowPlayingScreen>
         await Future.delayed(Duration(milliseconds: 500));
         await _initializeAudio();
         break;
-      
+
       case PlayMode.repeatOne:
         setState(() {
           _position = Duration.zero;
@@ -235,7 +236,7 @@ class _NowPlayingScreenState extends State<NowPlayingScreen>
     // Lưu bài hát hiện tại để phát lại sau khi quảng cáo kết thúc
     final previousSong = _currentSong;
     final previousIndex = _currentIndex;
-    
+
     setState(() {
       _isPlayingAds = true;
       isPlaying = true;
@@ -249,7 +250,7 @@ class _NowPlayingScreenState extends State<NowPlayingScreen>
       await _stopPlayback();
       await _adsPlayer.setAsset('assets/mp3ads/ads.mp3');
       await _adsPlayer.play();
-      
+
       _adsPlayer.positionStream.listen((position) {
         if (mounted && _isPlayingAds) {
           setState(() {
@@ -258,11 +259,10 @@ class _NowPlayingScreenState extends State<NowPlayingScreen>
           });
         }
       });
-      
+
       await _adsPlayer.playerStateStream.firstWhere(
-        (state) => state.processingState == ProcessingState.completed
-      );
-      
+          (state) => state.processingState == ProcessingState.completed);
+
       _songsPlayedCount = 0;
       _isPlayingAds = false;
 
@@ -272,14 +272,14 @@ class _NowPlayingScreenState extends State<NowPlayingScreen>
       } else {
         _currentIndex = 0; // Quay lại bài đầu tiên nếu đã hết playlist
       }
-      
+
       setState(() {
         _currentSong = _playlist[_currentIndex];
         _position = Duration.zero;
         _duration = Duration(seconds: _currentSong.duration);
         currentSliderValue = 0;
       });
-      
+
       await _initializeAudio();
     } catch (e) {
       print('Error playing ads: $e');
@@ -291,7 +291,7 @@ class _NowPlayingScreenState extends State<NowPlayingScreen>
       await _initializeAudio();
     }
   }
-  
+
   @override
   void dispose() {
     _sleepTimer?.cancel();
@@ -358,24 +358,6 @@ class _NowPlayingScreenState extends State<NowPlayingScreen>
                   ),
                 ),
                 ClipOval(
-                  child: _currentSong.imageUrl != null &&
-                          _currentSong.imageUrl!.isNotEmpty
-                      ? Image.network(
-                          _currentSong.imageUrl!,
-                          width: 180,
-                          height: 180,
-                          fit: BoxFit.cover,
-                        )
-                      : Container(
-                          width: 180,
-                          height: 180,
-                          color: Colors.white,
-                          child: const Icon(
-                            Icons.music_note,
-                            size: 80,
-                            color: Colors.grey,
-                          ),
-                        ),
                   child: _currentSong.id == 'ads'
                       ? Container(
                           width: 180,
@@ -387,7 +369,8 @@ class _NowPlayingScreenState extends State<NowPlayingScreen>
                             color: Colors.white,
                           ),
                         )
-                      : _currentSong.imageUrl != null && _currentSong.imageUrl!.isNotEmpty
+                      : _currentSong.imageUrl != null &&
+                              _currentSong.imageUrl!.isNotEmpty
                           ? Image.network(
                               _currentSong.imageUrl!,
                               width: 180,
@@ -842,7 +825,8 @@ class _NowPlayingScreenState extends State<NowPlayingScreen>
                           width: 48,
                           height: 48,
                           color: Colors.grey[800],
-                          child: const Icon(Icons.music_note, color: Colors.white),
+                          child:
+                              const Icon(Icons.music_note, color: Colors.white),
                         ),
             ),
             title: Text(
