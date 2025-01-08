@@ -63,14 +63,18 @@ class AuthProvider with ChangeNotifier {
       _error = null;
       notifyListeners();
 
+      print('Calling login API...');
       final response = await _authService
           .login(LoginRequest(username: username, password: password));
+      print('Login response: $response');
+
       await _authService.saveToken(response.token);
       _isAuthenticated = true;
       _username = username;
 
       return true;
     } catch (e) {
+      print('Login error details: $e');
       _error = e.toString();
       return false;
     } finally {
@@ -108,6 +112,7 @@ class AuthProvider with ChangeNotifier {
     notifyListeners();
   }
 
+  // Đăng nhập bằng Google
   Future<bool> socialLogin(SocialLoginRequest request) async {
     try {
       _isLoading = true;
@@ -128,4 +133,7 @@ class AuthProvider with ChangeNotifier {
       notifyListeners();
     }
   }
+
+  // Lấy dịch vụ đăng nhập
+  AuthService get authService => _authService;
 }

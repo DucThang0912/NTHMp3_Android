@@ -8,6 +8,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 class AuthService {
   static const String TOKEN_KEY = 'jwt_token';
   static const String USERNAME_KEY = 'username';
+  static const String ROLE_KEY = 'user_role';
   final SharedPreferences _prefs;
   final ApiService _apiService = ApiService();
 
@@ -21,6 +22,7 @@ class AuthService {
     // Lưu token và username
     await _prefs.setString(TOKEN_KEY, jwtResponse.token);
     await _prefs.setString(USERNAME_KEY, request.username);
+    await _prefs.setString(ROLE_KEY, jwtResponse.role);
 
     return jwtResponse;
   }
@@ -62,6 +64,7 @@ class AuthService {
   Future<void> logout() async {
     await _prefs.remove(TOKEN_KEY);
     await _prefs.remove(USERNAME_KEY);
+    await _prefs.remove(ROLE_KEY);
   }
 
   // Đăng nhập bằng OAuth
@@ -75,5 +78,11 @@ class AuthService {
     await _prefs.setString(USERNAME_KEY, jwtResponse.username);
 
     return jwtResponse;
+  }
+
+  // Thêm phương thức kiểm tra role
+  bool isAdmin() {
+    final role = _prefs.getString(ROLE_KEY);
+    return role == 'ROLE_ADMIN';
   }
 }

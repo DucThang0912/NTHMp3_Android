@@ -80,12 +80,15 @@ class _AppBar extends StatelessWidget {
                   Navigator.push(
                     context,
                     PageRouteBuilder(
-                      pageBuilder: (context, animation, secondaryAnimation) => const SearchScreen(),
-                      transitionsBuilder: (context, animation, secondaryAnimation, child) {
+                      pageBuilder: (context, animation, secondaryAnimation) =>
+                          const SearchScreen(),
+                      transitionsBuilder:
+                          (context, animation, secondaryAnimation, child) {
                         const begin = Offset(1.0, 0.0);
                         const end = Offset.zero;
                         const curve = Curves.easeInOut;
-                        var tween = Tween(begin: begin, end: end).chain(CurveTween(curve: curve));
+                        var tween = Tween(begin: begin, end: end)
+                            .chain(CurveTween(curve: curve));
                         var offsetAnimation = animation.drive(tween);
                         return SlideTransition(
                           position: offsetAnimation,
@@ -116,7 +119,8 @@ class _FeaturedBanner extends StatefulWidget {
   State<_FeaturedBanner> createState() => _FeaturedBannerState();
 }
 
-class _FeaturedBannerState extends State<_FeaturedBanner> with SingleTickerProviderStateMixin {
+class _FeaturedBannerState extends State<_FeaturedBanner>
+    with SingleTickerProviderStateMixin {
   late AnimationController _controller;
   late Animation<double> _animation;
   final List<Map<String, dynamic>> _bannerData = [
@@ -147,7 +151,7 @@ class _FeaturedBannerState extends State<_FeaturedBanner> with SingleTickerProvi
       duration: const Duration(seconds: 10),
       vsync: this,
     )..repeat();
-    
+
     _animation = Tween<double>(begin: 0, end: 2 * math.pi).animate(_controller);
   }
 
@@ -188,11 +192,17 @@ class _FeaturedBannerState extends State<_FeaturedBanner> with SingleTickerProvi
                   children: [
                     CustomPaint(
                       size: Size.infinite,
-                      painter: index == 0 
-                          ? WavePainter(animation: _animation.value, color: Colors.white.withOpacity(0.1))
-                          : index == 1 
-                              ? CirclePainter(animation: _animation.value, color: Colors.white.withOpacity(0.1))
-                              : BubblePainter(animation: _animation.value, color: Colors.white.withOpacity(0.1)),
+                      painter: index == 0
+                          ? WavePainter(
+                              animation: _animation.value,
+                              color: Colors.white.withOpacity(0.1))
+                          : index == 1
+                              ? CirclePainter(
+                                  animation: _animation.value,
+                                  color: Colors.white.withOpacity(0.1))
+                              : BubblePainter(
+                                  animation: _animation.value,
+                                  color: Colors.white.withOpacity(0.1)),
                     ),
                     Padding(
                       padding: const EdgeInsets.all(16),
@@ -205,7 +215,10 @@ class _FeaturedBannerState extends State<_FeaturedBanner> with SingleTickerProvi
                               children: [
                                 ShaderMask(
                                   shaderCallback: (bounds) => LinearGradient(
-                                    colors: [Colors.white, Colors.white.withOpacity(0.7)],
+                                    colors: [
+                                      Colors.white,
+                                      Colors.white.withOpacity(0.7)
+                                    ],
                                   ).createShader(bounds),
                                   child: Text(
                                     _bannerData[index]['title'],
@@ -269,16 +282,16 @@ class WavePainter extends CustomPainter {
 
     final path = Path();
     var y = size.height / 2;
-    
+
     path.moveTo(0, y);
-    
+
     for (var i = 0.0; i < size.width; i++) {
       y = size.height / 2 +
           math.sin((i / 30) + animation) * 20 +
           math.cos((i / 50) + animation) * 20;
       path.lineTo(i, y);
     }
-    
+
     canvas.drawPath(path, paint);
   }
 
@@ -300,7 +313,8 @@ class CirclePainter extends CustomPainter {
       ..strokeWidth = 2.0;
 
     for (var i = 0; i < 5; i++) {
-      final radius = (size.width / 4) * (i + 1) + (math.sin(animation + i) * 20);
+      final radius =
+          (size.width / 4) * (i + 1) + (math.sin(animation + i) * 20);
       canvas.drawCircle(
         Offset(size.width / 2, size.height / 2),
         radius,
@@ -359,7 +373,8 @@ class _GenresState extends State<_Genres> {
 
   Future<void> _loadGenres() async {
     try {
-      final spotifyProvider = Provider.of<SpotifyProvider>(context, listen: false);
+      final spotifyProvider =
+          Provider.of<SpotifyProvider>(context, listen: false);
       final loadedGenres = await spotifyProvider.spotifyService.getGenres();
       setState(() {
         genres = loadedGenres;
@@ -402,7 +417,7 @@ class _GenresState extends State<_Genres> {
                 final genre = genres[index];
                 // Tạo màu ngẫu nhiên cho mỗi thể loại
                 final color = Colors.primaries[index % Colors.primaries.length];
-                
+
                 return Container(
                   width: 100,
                   margin: const EdgeInsets.only(right: 12),
@@ -454,8 +469,10 @@ class _RecentlyPlayedState extends State<_RecentlyPlayed> {
 
   Future<void> _loadRecentSongs() async {
     try {
-      final spotifyProvider = Provider.of<SpotifyProvider>(context, listen: false);
-      final songs = await spotifyProvider.spotifyService.searchSongs('recent popular vietnam');
+      final spotifyProvider =
+          Provider.of<SpotifyProvider>(context, listen: false);
+      final songs = await spotifyProvider.spotifyService
+          .searchSongs('recent popular vietnam');
       setState(() {
         recentSongs = songs.take(10).toList();
         isLoading = false;
@@ -512,7 +529,7 @@ class _RecentlyPlayedItem extends StatelessWidget {
   final Song song;
   final List<Song> playlist;
   final int index;
-  
+
   const _RecentlyPlayedItem({
     required this.song,
     required this.playlist,
@@ -545,7 +562,8 @@ class _RecentlyPlayedItem extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             ClipRRect(
-              borderRadius: const BorderRadius.vertical(top: Radius.circular(8)),
+              borderRadius:
+                  const BorderRadius.vertical(top: Radius.circular(8)),
               child: Container(
                 height: 150,
                 width: 150,
@@ -620,8 +638,10 @@ class _TopTrendingState extends State<_TopTrending> {
 
   Future<void> _loadTrendingSongs() async {
     try {
-      final spotifyProvider = Provider.of<SpotifyProvider>(context, listen: false);
-      final songs = await spotifyProvider.spotifyService.searchSongs('top trending vietnam');
+      final spotifyProvider =
+          Provider.of<SpotifyProvider>(context, listen: false);
+      final songs = await spotifyProvider.spotifyService
+          .searchSongs('top trending vietnam');
       setState(() {
         trendingSongs = songs.take(10).toList();
         isLoading = false;
@@ -677,7 +697,7 @@ class _TopTrendingItem extends StatelessWidget {
   final Song song;
   final List<Song> playlist;
   final int index;
-  
+
   const _TopTrendingItem({
     required this.song,
     required this.playlist,
@@ -710,7 +730,8 @@ class _TopTrendingItem extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             ClipRRect(
-              borderRadius: const BorderRadius.vertical(top: Radius.circular(8)),
+              borderRadius:
+                  const BorderRadius.vertical(top: Radius.circular(8)),
               child: song.imageUrl != null && song.imageUrl!.isNotEmpty
                   ? Image.network(
                       song.imageUrl!,
@@ -731,7 +752,8 @@ class _TopTrendingItem extends StatelessWidget {
                           ],
                         ),
                       ),
-                      child: const Icon(Icons.music_note, color: Colors.white, size: 50),
+                      child: const Icon(Icons.music_note,
+                          color: Colors.white, size: 50),
                     ),
             ),
             Padding(
@@ -773,7 +795,8 @@ class _NewReleases extends StatefulWidget {
   State<_NewReleases> createState() => _NewReleasesState();
 }
 
-class _NewReleasesState extends State<_NewReleases> with SingleTickerProviderStateMixin {
+class _NewReleasesState extends State<_NewReleases>
+    with SingleTickerProviderStateMixin {
   late TabController _tabController;
   final List<String> _tabs = ['Mới phát hành', 'BXH', 'V-Pop', 'K-Pop'];
   List<Song> songs = [];
@@ -796,23 +819,27 @@ class _NewReleasesState extends State<_NewReleases> with SingleTickerProviderSta
 
   Future<void> _loadSongs() async {
     try {
-      final spotifyProvider = Provider.of<SpotifyProvider>(context, listen: false);
-      
+      final spotifyProvider =
+          Provider.of<SpotifyProvider>(context, listen: false);
+
       // Load new releases
       final newReleases = await spotifyProvider.spotifyService.getNewReleases();
       print('New Releases loaded: ${newReleases.length} songs');
-      
+
       // Load top charts Vietnam
-      final topCharts = await spotifyProvider.spotifyService.searchSongs('top vietnam', market: 'VN');
+      final topCharts = await spotifyProvider.spotifyService
+          .searchSongs('top vietnam', market: 'VN');
       print('Top Charts loaded: ${topCharts.length} songs');
-      
+
       // Load V-Pop với query mới
-      final vPop = await spotifyProvider.spotifyService.searchSongs('Son Tung MTP Vu My Tam', market: 'VN');
+      final vPop = await spotifyProvider.spotifyService
+          .searchSongs('Son Tung MTP Vu My Tam', market: 'VN');
       print('V-Pop loaded: ${vPop.length} songs');
       print('V-Pop songs: ${vPop.map((s) => s.title).toList()}');
-      
+
       // Load K-Pop
-      final kPop = await spotifyProvider.spotifyService.searchSongsByGenre('k-pop');
+      final kPop =
+          await spotifyProvider.spotifyService.searchSongsByGenre('k-pop');
       print('K-Pop loaded: ${kPop.length} songs');
 
       if (mounted) {
@@ -867,7 +894,7 @@ class _NewReleasesState extends State<_NewReleases> with SingleTickerProviderSta
     if (isLoading) {
       return const Center(child: CircularProgressIndicator());
     }
-    
+
     return ListView.builder(
       padding: const EdgeInsets.all(16),
       itemCount: songs.length,
@@ -978,7 +1005,8 @@ class _NewReleasesState extends State<_NewReleases> with SingleTickerProviderSta
                                 ],
                               ),
                             ),
-                            child: const Icon(Icons.music_note, color: Colors.white),
+                            child: const Icon(Icons.music_note,
+                                color: Colors.white),
                           ),
                   ),
                 ],
@@ -1030,8 +1058,9 @@ class _NewReleasesState extends State<_NewReleases> with SingleTickerProviderSta
     );
   }
 
-  Widget _buildSongListItem(Song song, {
-    required List<Song> playlist, 
+  Widget _buildSongListItem(
+    Song song, {
+    required List<Song> playlist,
     Widget? leading,
   }) {
     return Container(
@@ -1041,31 +1070,32 @@ class _NewReleasesState extends State<_NewReleases> with SingleTickerProviderSta
         borderRadius: BorderRadius.circular(8),
       ),
       child: ListTile(
-        leading: leading ?? ClipRRect(
-          borderRadius: BorderRadius.circular(4),
-          child: song.imageUrl != null && song.imageUrl!.isNotEmpty
-              ? Image.network(
-                  song.imageUrl!,
-                  width: 48,
-                  height: 48,
-                  fit: BoxFit.cover,
-                )
-              : Container(
-                  width: 48,
-                  height: 48,
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                      colors: [
-                        Colors.purple.withOpacity(0.7),
-                        Colors.blue.withOpacity(0.7),
-                      ],
+        leading: leading ??
+            ClipRRect(
+              borderRadius: BorderRadius.circular(4),
+              child: song.imageUrl != null && song.imageUrl!.isNotEmpty
+                  ? Image.network(
+                      song.imageUrl!,
+                      width: 48,
+                      height: 48,
+                      fit: BoxFit.cover,
+                    )
+                  : Container(
+                      width: 48,
+                      height: 48,
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                          colors: [
+                            Colors.purple.withOpacity(0.7),
+                            Colors.blue.withOpacity(0.7),
+                          ],
+                        ),
+                      ),
+                      child: const Icon(Icons.music_note, color: Colors.white),
                     ),
-                  ),
-                  child: const Icon(Icons.music_note, color: Colors.white),
-                ),
-        ),
+            ),
         title: Text(
           song.title,
           style: const TextStyle(color: Colors.white),
@@ -1109,7 +1139,8 @@ class _TopGridItem extends StatelessWidget {
         children: [
           Expanded(
             child: ClipRRect(
-              borderRadius: const BorderRadius.vertical(top: Radius.circular(8)),
+              borderRadius:
+                  const BorderRadius.vertical(top: Radius.circular(8)),
               child: Lottie.asset(
                 'assets/animations/musicDisc.json',
                 fit: BoxFit.cover,
@@ -1125,9 +1156,9 @@ class _TopGridItem extends StatelessWidget {
 class _NewReleasesItem extends StatelessWidget {
   final Song? song;
   final List<Song> playlist;
-  
+
   const _NewReleasesItem({
-    this.song, 
+    this.song,
     required this.playlist,
   });
 
@@ -1215,8 +1246,10 @@ class _TopArtistsState extends State<_TopArtists> {
 
   Future<void> _loadArtists() async {
     try {
-      final spotifyProvider = Provider.of<SpotifyProvider>(context, listen: false);
-      final loadedArtists = await spotifyProvider.spotifyService.getTopArtists();
+      final spotifyProvider =
+          Provider.of<SpotifyProvider>(context, listen: false);
+      final loadedArtists =
+          await spotifyProvider.spotifyService.getTopArtists();
       setState(() {
         artists = loadedArtists;
         isLoading = false;
@@ -1306,7 +1339,8 @@ class _ArtistItem extends StatelessWidget {
                           ],
                         ),
                       ),
-                      child: const Icon(Icons.person, color: Colors.white, size: 50),
+                      child: const Icon(Icons.person,
+                          color: Colors.white, size: 50),
                     ),
             ),
             const SizedBox(height: 8),

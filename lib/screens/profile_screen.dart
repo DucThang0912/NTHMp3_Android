@@ -6,6 +6,8 @@ import '../providers/auth_provider.dart';
 import 'login_screen.dart';
 import '../widgets/main_screen_bottom_nav.dart';
 import 'profile_details_screen.dart';
+import 'library_screen.dart';
+import 'admin/admin_screen.dart';
 import 'upgrade_screen.dart';
 
 class ProfileScreen extends StatelessWidget {
@@ -23,6 +25,7 @@ class ProfileScreen extends StatelessWidget {
     );
   }
 
+  // Xây dựng giao diện
   Widget _buildAuthenticatedProfile(
       BuildContext context, AuthProvider authProvider) {
     return Scaffold(
@@ -62,14 +65,26 @@ class ProfileScreen extends StatelessWidget {
               icon: Icons.favorite_outline,
               title: 'Bài hát yêu thích',
               onTap: () {
-                // TODO: Navigate to favorite songs
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) =>
+                        const LibraryScreen(initialTabIndex: 1),
+                  ),
+                );
               },
             ),
             _buildProfileMenuItem(
               icon: Icons.playlist_play,
               title: 'Playlist của tôi',
               onTap: () {
-                // TODO: Navigate to my playlists
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) =>
+                        const LibraryScreen(initialTabIndex: 0),
+                  ),
+                );
               },
             ),
             _buildProfileMenuItem(
@@ -91,6 +106,20 @@ class ProfileScreen extends StatelessWidget {
                 // TODO: Navigate to settings
               },
             ),
+            if (authProvider.authService.isAdmin()) ...[
+              const Divider(color: Colors.white24),
+              _buildProfileMenuItem(
+                icon: Icons.admin_panel_settings,
+                title: 'Quản trị hệ thống',
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                        builder: (context) => const AdminScreen()),
+                  );
+                },
+              ),
+            ],
             const Divider(color: Colors.white24),
             _buildProfileMenuItem(
               icon: Icons.logout,

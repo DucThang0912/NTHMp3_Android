@@ -122,6 +122,13 @@ class _ProfileDetailsScreenState extends State<ProfileDetailsScreen> {
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
+        leading: IconButton(
+          icon: const Icon(
+            Icons.arrow_back_ios,
+            color: Colors.white,
+          ),
+          onPressed: () => Navigator.pop(context),
+        ),
         title: Text(
           'Thông tin cá nhân',
           style: GoogleFonts.montserrat(
