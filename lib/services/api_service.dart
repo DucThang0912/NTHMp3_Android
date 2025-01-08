@@ -5,17 +5,15 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 class ApiService {
   static String get baseUrl {
-    print('Platform.isAndroid: ${Platform.isAndroid}');
-
     if (Platform.isAndroid) {
-      try {
-        // Thử kết nối với localhost trước
+      // Nếu đang chạy trên Android Emulator
+      if (Platform.environment.containsKey('ANDROID_EMU')) {
         return 'http://10.0.2.2:8080/api';
-      } catch (e) {
-        // Nếu không kết nối được, sử dụng IP thật
-        return 'http://192.168.1.104:8080/api';
       }
+      // Nếu đang chạy trên thiết bị thật
+      return 'http://10.15.32.145:8080/api';
     }
+    // Cho các platform khác
     return 'http://localhost:8080/api';
   }
 

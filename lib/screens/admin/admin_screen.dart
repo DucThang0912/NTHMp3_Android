@@ -3,6 +3,7 @@ import '../../constants/colors.dart';
 import 'user_management_screen.dart';
 import 'song_management_screen.dart';
 import 'playlist_management_screen.dart';
+import 'statistics_screen.dart';
 
 class AdminScreen extends StatelessWidget {
   const AdminScreen({super.key});
@@ -57,7 +58,14 @@ class AdminScreen extends StatelessWidget {
             'Thống kê',
             Icons.bar_chart,
             Colors.green,
-            () {},
+            () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const StatisticsScreen(),
+                ),
+              );
+            },
           ),
         ],
       ),
