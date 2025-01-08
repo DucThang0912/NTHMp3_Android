@@ -104,3 +104,5 @@ flutter:
 
   assets:
     - assets/animations/
+    - assets/mp3ads/
+    - assets/images/

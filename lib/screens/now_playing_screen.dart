@@ -9,6 +9,7 @@ import '../providers/spotify_provider.dart';
 import '../services/spotify_service.dart';
 import 'dart:math';
 import '../mixins/timer_mixin.dart';
+import '../providers/auth_provider.dart';
 
 enum PlayMode {
   none,        // Phát một lần rồi dừng
@@ -50,6 +51,9 @@ class _NowPlayingScreenState extends State<NowPlayingScreen>
   bool _initialized = false;
   late List<Song> _playlist;
   late int _currentIndex;
+  int _songsPlayedCount = 0;
+  bool _isPlayingAds = false;
+  final AudioPlayer _adsPlayer = AudioPlayer();
   
   @override
   void initState() {
@@ -155,6 +159,25 @@ class _NowPlayingScreenState extends State<NowPlayingScreen>
   }
 
   void _handleSongEnd() async {
+    if (_isPlayingAds) {
+      return; // Không xử lý khi đang phát quảng cáo
+    }
+
+    // Tăng số bài đã phát
+    _songsPlayedCount++;
+    
+    // Kiểm tra điều kiện phát quảng cáo
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    final needsAds = !authProvider.isAuthenticated || 
+                    (authProvider.currentUser?.role?.id == 2);
+                    
+    if (needsAds && _songsPlayedCount >= 2 && !_isPlayingAds) {
+      // Phát quảng cáo
+      await _playAds();
+      return;
+    }
+
+    // Logic phát nhạc hiện tại
     switch (_playMode) {
       case PlayMode.none:
         setState(() {
@@ -194,11 +217,73 @@ class _NowPlayingScreenState extends State<NowPlayingScreen>
         break;
     }
   }
+
+  Future<void> _playAds() async {
+    // Lưu bài hát hiện tại để phát lại sau khi quảng cáo kết thúc
+    final previousSong = _currentSong;
+    final previousIndex = _currentIndex;
+    
+    setState(() {
+      _isPlayingAds = true;
+      isPlaying = true;
+      _currentSong = _createAdsSong();
+      _position = Duration.zero;
+      _duration = Duration(seconds: _currentSong.duration);
+      currentSliderValue = 0;
+    });
+
+    try {
+      await _stopPlayback();
+      await _adsPlayer.setAsset('assets/mp3ads/ads.mp3');
+      await _adsPlayer.play();
+      
+      _adsPlayer.positionStream.listen((position) {
+        if (mounted && _isPlayingAds) {
+          setState(() {
+            _position = position;
+            currentSliderValue = position.inSeconds.toDouble();
+          });
+        }
+      });
+      
+      await _adsPlayer.playerStateStream.firstWhere(
+        (state) => state.processingState == ProcessingState.completed
+      );
+      
+      _songsPlayedCount = 0;
+      _isPlayingAds = false;
+
+      // Chuyển sang bài tiếp theo thay vì phát lại bài cũ
+      if (_currentIndex < _playlist.length - 1) {
+        _currentIndex = previousIndex + 1;
+      } else {
+        _currentIndex = 0; // Quay lại bài đầu tiên nếu đã hết playlist
+      }
+      
+      setState(() {
+        _currentSong = _playlist[_currentIndex];
+        _position = Duration.zero;
+        _duration = Duration(seconds: _currentSong.duration);
+        currentSliderValue = 0;
+      });
+      
+      await _initializeAudio();
+    } catch (e) {
+      print('Error playing ads: $e');
+      _isPlayingAds = false;
+      setState(() {
+        _currentSong = previousSong;
+        _currentIndex = previousIndex;
+      });
+      await _initializeAudio();
+    }
+  }
   
   @override
   void dispose() {
     _pageController.dispose();
     _audioPlayer.dispose();
+    _adsPlayer.dispose();
     _stopPlayback();
     super.dispose();
   }
@@ -257,23 +342,46 @@ class _NowPlayingScreenState extends State<NowPlayingScreen>
                   ),
                 ),
                 ClipOval(
-                  child: _currentSong.imageUrl != null && _currentSong.imageUrl!.isNotEmpty
-                      ? Image.network(
-                          _currentSong.imageUrl!,
+                  child: _currentSong.id == 'ads'
+                      ? Container(
                           width: 180,
                           height: 180,
-                          fit: BoxFit.cover,
-                        )
-                      : Container(
-                          width: 180,
-                          height: 180,
-                          color: Colors.white,
+                          color: Colors.green,
                           child: const Icon(
-                            Icons.music_note,
+                            Icons.campaign,
                             size: 80,
-                            color: Colors.grey,
+                            color: Colors.white,
                           ),
-                        ),
+                        )
+                      : _currentSong.imageUrl != null && _currentSong.imageUrl!.isNotEmpty
+                          ? Image.network(
+                              _currentSong.imageUrl!,
+                              width: 180,
+                              height: 180,
+                              fit: BoxFit.cover,
+                              errorBuilder: (context, error, stackTrace) {
+                                return Container(
+                                  width: 180,
+                                  height: 180,
+                                  color: Colors.grey[800],
+                                  child: const Icon(
+                                    Icons.music_note,
+                                    size: 80,
+                                    color: Colors.white,
+                                  ),
+                                );
+                              },
+                            )
+                          : Container(
+                              width: 180,
+                              height: 180,
+                              color: Colors.grey[800],
+                              child: const Icon(
+                                Icons.music_note,
+                                size: 80,
+                                color: Colors.white,
+                              ),
+                            ),
                 ),
                 Container(
                   width: 20,
@@ -647,19 +755,26 @@ class _NowPlayingScreenState extends State<NowPlayingScreen>
           child: ListTile(
             leading: ClipRRect(
               borderRadius: BorderRadius.circular(4),
-              child: song.imageUrl != null && song.imageUrl!.isNotEmpty
-                  ? Image.network(
-                      song.imageUrl!,
+              child: song.id == 'ads' 
+                  ? Container(
                       width: 48,
                       height: 48,
-                      fit: BoxFit.cover,
+                      color: Colors.purple.withOpacity(0.3),
+                      child: const Icon(Icons.campaign, color: Colors.white),
                     )
-                  : Container(
-                      width: 48,
-                      height: 48,
-                      color: Colors.grey[800],
-                      child: const Icon(Icons.music_note, color: Colors.white),
-                    ),
+                  : song.imageUrl != null && song.imageUrl!.isNotEmpty
+                      ? Image.network(
+                          song.imageUrl!,
+                          width: 48,
+                          height: 48,
+                          fit: BoxFit.cover,
+                        )
+                      : Container(
+                          width: 48,
+                          height: 48,
+                          color: Colors.grey[800],
+                          child: const Icon(Icons.music_note, color: Colors.white),
+                        ),
             ),
             title: Text(
               song.title,
@@ -684,6 +799,22 @@ class _NowPlayingScreenState extends State<NowPlayingScreen>
           ),
         );
       },
+    );
+  }
+
+  Song _createAdsSong() {
+    return Song(
+      id: 'ads',
+      title: 'Quảng cáo',
+      artistName: 'Trải nghiệm premium không quảng cáo',
+      artistId: 0,
+      genreName: 'Advertisement',
+      genreId: 0,
+      duration: 30,
+      filePath: 'assets/mp3ads/ads.mp3',
+      imageUrl: 'assets/images/ads_image.png',
+      albumTitle: 'Advertisement',
+      albumId: 0,
     );
   }
 

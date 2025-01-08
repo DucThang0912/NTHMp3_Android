@@ -6,6 +6,7 @@ import '../providers/auth_provider.dart';
 import 'login_screen.dart';
 import '../widgets/main_screen_bottom_nav.dart';
 import 'profile_details_screen.dart';
+import 'upgrade_screen.dart';
 
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
@@ -69,6 +70,18 @@ class ProfileScreen extends StatelessWidget {
               title: 'Playlist của tôi',
               onTap: () {
                 // TODO: Navigate to my playlists
+              },
+            ),
+            _buildProfileMenuItem(
+              icon: Icons.workspace_premium,
+              title: 'Nâng cấp tài khoản',
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const UpgradeScreen(),
+                  ),
+                );
               },
             ),
             _buildProfileMenuItem(
