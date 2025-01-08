@@ -14,12 +14,18 @@ Các chức năng:
 - Quản lý playlist
 - Quản lý theo dõi
 
+File báo cáo:
+
+- Filedocx: [4NTH-UngDungNgheNhac.docx](https://github.com/user-attachments/files/18342230/4NTH-UngDungNgheNhac.docx)
+
+- Filepdf:  [4NTH-UngDungNgheNhac.pdf](https://github.com/user-attachments/files/18342232/4NTH-UngDungNgheNhac.pdf)
+  
 # Database
-
 Sơ đồ (ERD):
-![image](https://github.com/user-attachments/assets/26875799-eaa5-4df5-9125-56d38baf20dd)
+![image](https://github.com/user-attachments/assets/ea9eb5a4-2f39-414f-9bdd-672c014057a8)
 
-
+#Usecase
 Usecase tổng quát
 ![image](https://github.com/user-attachments/assets/1daa64eb-6f76-4628-9427-af2253731a72)
+
 
