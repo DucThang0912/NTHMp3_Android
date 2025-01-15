@@ -130,6 +130,7 @@ class _AddToPlaylistBottomSheetState extends State<AddToPlaylistBottomSheet> {
           TextButton(
             onPressed: () async {
               if (nameController.text.isNotEmpty) {
+                Navigator.pop(context); // Đóng dialog trước
                 await _createAndAddToPlaylist(
                   nameController.text,
                   descriptionController.text,
@@ -159,11 +160,14 @@ class _AddToPlaylistBottomSheetState extends State<AddToPlaylistBottomSheet> {
         'user_id': userId,
       });
 
+      // Thêm playlist mới vào danh sách hiện tại
+      setState(() {
+        _playlists.add(playlist);
+      });
+
       await _playlistService.addSongToPlaylist(playlist.id!, widget.song.id!);
 
       if (mounted) {
-        Navigator.pop(context); // Đóng dialog tạo playlist
-        Navigator.pop(context); // Đóng bottom sheet
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Đã tạo playlist và thêm bài hát')),
         );

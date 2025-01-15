@@ -49,13 +49,7 @@ class _LibraryScreenState extends State<LibraryScreen>
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
-        leading: IconButton(
-          icon: const Icon(
-            Icons.arrow_back_ios,
-            color: Colors.white,
-          ),
-          onPressed: () => Navigator.pop(context),
-        ),
+
         backgroundColor: AppColors.background,
         title: const Text(
           'Thư viện',

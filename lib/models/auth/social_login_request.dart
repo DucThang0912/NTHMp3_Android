@@ -1,16 +1,16 @@
 enum SocialProvider { GOOGLE, FACEBOOK }
 
 class SocialLoginRequest {
-  final String accessToken;
+  final String idToken;
   final SocialProvider provider;
 
   SocialLoginRequest({
-    required this.accessToken,
+    required this.idToken,
     required this.provider,
   });
 
   Map<String, dynamic> toJson() => {
-        'accessToken': accessToken,
+        'accessToken': idToken,
         'provider': provider.toString().split('.').last,
       };
 }

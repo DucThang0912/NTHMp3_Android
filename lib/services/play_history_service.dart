@@ -5,9 +5,9 @@ class PlayHistoryService {
   final ApiService _apiService = ApiService();
 
   // Thêm bài hát vào lịch sử nghe
-  Future<void> addToHistory(int songId) async {
+  Future<void> addToHistory(String spotifyId) async {
     try {
-      await _apiService.post('history/add/$songId', {});
+      await _apiService.post('history/add/$spotifyId', {});
     } catch (e) {
       print('Error adding to history: $e');
       rethrow;

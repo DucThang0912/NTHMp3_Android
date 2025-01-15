@@ -12,6 +12,7 @@ import '../models/song.dart';
 import '../models/artist.dart';
 import 'package:provider/provider.dart';
 import '../providers/spotify_provider.dart';
+import '../screens/history_screen.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -101,8 +102,15 @@ class _AppBar extends StatelessWidget {
                 },
               ),
               IconButton(
-                icon: const Icon(Icons.notifications_none, color: Colors.white),
-                onPressed: () {},
+                icon: const Icon(Icons.history, color: Colors.white),
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const HistoryScreen(),
+                    ),
+                  );
+                },
               ),
             ],
           ),

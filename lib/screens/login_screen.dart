@@ -201,6 +201,7 @@ class _LoginScreenState extends State<LoginScreen>
     try {
       // Kiểm tra Google Play Services
       final GoogleSignIn googleSignIn = GoogleSignIn(
+        clientId: '217356953215-g9i9pgkpej2lr7ppuif7hd1a65b2i8ak.apps.googleusercontent.com',
         scopes: [
           'email',
           'https://www.googleapis.com/auth/userinfo.profile',
@@ -241,7 +242,7 @@ class _LoginScreenState extends State<LoginScreen>
         final GoogleSignInAuthentication auth = await account.authentication;
 
         final request = SocialLoginRequest(
-          accessToken: auth.accessToken!,
+          idToken: auth.idToken!,
           provider: SocialProvider.GOOGLE,
         );
 
@@ -273,32 +274,32 @@ class _LoginScreenState extends State<LoginScreen>
     }
   }
 
-  Future<void> _handleFacebookLogin(BuildContext context) async {
-    try {
-      final LoginResult result = await FacebookAuth.instance.login();
-      if (result.status == LoginStatus.success) {
-        final request = SocialLoginRequest(
-          accessToken: result.accessToken!.token,
-          provider: SocialProvider.FACEBOOK,
-        );
+  // Future<void> _handleFacebookLogin(BuildContext context) async {
+  //   try {
+  //     final LoginResult result = await FacebookAuth.instance.login();
+  //     if (result.status == LoginStatus.success) {
+  //       final request = SocialLoginRequest(
+  //         accessToken: result.accessToken!.token,
+  //         provider: SocialProvider.FACEBOOK,
+  //       );
 
-        final success = await Provider.of<AuthProvider>(context, listen: false)
-            .socialLogin(request);
+  //       final success = await Provider.of<AuthProvider>(context, listen: false)
+  //           .socialLogin(request);
 
-        if (success && mounted) {
-          Navigator.pushAndRemoveUntil(
-            context,
-            MaterialPageRoute(builder: (context) => const HomeScreen()),
-            (route) => false,
-          );
-        }
-      }
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Đăng nhập Facebook thất bại: $e')),
-      );
-    }
-  }
+  //       if (success && mounted) {
+  //         Navigator.pushAndRemoveUntil(
+  //           context,
+  //           MaterialPageRoute(builder: (context) => const HomeScreen()),
+  //           (route) => false,
+  //         );
+  //       }
+  //     }
+  //   } catch (e) {
+  //     ScaffoldMessenger.of(context).showSnackBar(
+  //       SnackBar(content: Text('Đăng nhập Facebook thất bại: $e')),
+  //     );
+  //   }
+  // }
 
   @override
   Widget build(BuildContext context) {
@@ -493,12 +494,12 @@ class _LoginScreenState extends State<LoginScreen>
                                         _handleGoogleLogin(context),
                                   ),
                                   const SizedBox(width: 20),
-                                  _buildSocialButton(
-                                    icon: FontAwesomeIcons.facebook,
-                                    color: const Color(0xFF1877F2),
-                                    onPressed: () =>
-                                        _handleFacebookLogin(context),
-                                  ),
+                                  // _buildSocialButton(
+                                  //   icon: FontAwesomeIcons.facebook,
+                                  //   color: const Color(0xFF1877F2),
+                                  //   onPressed: () =>
+                                  //       _handleFacebookLogin(context),
+                                  // ),
                                 ],
                               ),
                               const SizedBox(height: 30),

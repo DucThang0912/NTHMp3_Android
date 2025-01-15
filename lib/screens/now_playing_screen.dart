@@ -116,7 +116,6 @@ class _NowPlayingScreenState extends State<NowPlayingScreen>
   // Khởi tạo AudioPlayer và phát bài hát
   Future<void> _initializeAudio() async {
     try {
-      // Dừng bài đang phát
       await _spotifyService.pauseTrack();
       await Future.delayed(Duration(milliseconds: 500));
 
@@ -842,7 +841,34 @@ class _NowPlayingScreenState extends State<NowPlayingScreen>
                 color: isPlaying ? Colors.purple.withOpacity(0.7) : Colors.grey,
               ),
             ),
-            onTap: () {
+            onTap: () async {
+              // Thêm vào lịch sử nghe ngay khi click
+              if (song.id != 'ads') {
+                try {
+                  await _playHistoryService.addToHistory(song.spotifyId);
+                  if (mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content:
+                            Text('Đã thêm "${song.title}" vào lịch sử nghe'),
+                        duration: const Duration(seconds: 1),
+                      ),
+                    );
+                  }
+                } catch (e) {
+                  print('Error adding to history: $e');
+                  if (mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content:
+                            Text('Không thể thêm vào lịch sử: ${e.toString()}'),
+                        duration: const Duration(seconds: 1),
+                      ),
+                    );
+                  }
+                }
+              }
+
               setState(() {
                 _currentIndex = index;
                 _currentSong = _playlist[index];
@@ -944,12 +970,18 @@ class _NowPlayingScreenState extends State<NowPlayingScreen>
               ),
             ),
             const SizedBox(height: 20),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              children: [15, 30, 45, 60].map((minutes) {
+            Wrap(
+              spacing: 10,
+              runSpacing: 10,
+              alignment: WrapAlignment.center,
+              children: [10, 15, 30, 45, 60].map((duration) {
+                final isSeconds = duration == 10;
+                final displayText = isSeconds ? '10 giây' : '$duration phút';
+                final actualDuration = isSeconds ? duration : duration * 60;
+
                 return ElevatedButton(
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: _sleepMinutes == minutes
+                    backgroundColor: _sleepMinutes == actualDuration
                         ? Colors.purple
                         : Colors.grey[800],
                     padding: const EdgeInsets.symmetric(
@@ -958,10 +990,10 @@ class _NowPlayingScreenState extends State<NowPlayingScreen>
                     ),
                   ),
                   onPressed: () {
-                    _setSleepTimer(minutes);
+                    _setSleepTimer(actualDuration, isSeconds: isSeconds);
                     Navigator.pop(context);
                   },
-                  child: Text('$minutes phút'),
+                  child: Text(displayText),
                 );
               }).toList(),
             ),
@@ -980,11 +1012,12 @@ class _NowPlayingScreenState extends State<NowPlayingScreen>
     );
   }
 
-  void _setSleepTimer(int minutes) {
+  void _setSleepTimer(int duration, {bool isSeconds = false}) {
     _cancelSleepTimer();
-    setState(() => _sleepMinutes = minutes);
+    setState(() => _sleepMinutes = duration);
 
-    _sleepTimer = Timer(Duration(minutes: minutes), () {
+    _sleepTimer =
+        Timer(Duration(seconds: isSeconds ? duration : duration * 60), () {
       _stopPlayback();
       setState(() {
         isPlaying = false;
@@ -994,7 +1027,10 @@ class _NowPlayingScreenState extends State<NowPlayingScreen>
     });
 
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('Đã đặt hẹn giờ sau $minutes phút')),
+      SnackBar(
+        content: Text(
+            'Đã đặt hẹn giờ sau ${isSeconds ? "$duration giây" : "$duration phút"}'),
+      ),
     );
   }
 
