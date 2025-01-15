@@ -17,14 +17,14 @@ public class PlayHistoryController {
     private PlayHistoryService playHistoryService;
 
     // Thêm bài hát vào lịch sử nghe (ADMIN, USER)
-    @PostMapping("/add/{songId}")
+    @PostMapping("/add/{spotifyId}")
     @PreAuthorize("hasRole('ADMIN') or hasRole('USER')")
     public ResponseEntity<?> addToHistory(
-            @PathVariable Long songId,
+            @PathVariable String spotifyId,
             Authentication authentication) {
         try {
             UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
-            Playhistory history = playHistoryService.addToHistory(userDetails.getId(), songId);
+            Playhistory history = playHistoryService.addToHistory(userDetails.getId(), spotifyId);
             return ResponseEntity.ok(history);
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(e.getMessage());

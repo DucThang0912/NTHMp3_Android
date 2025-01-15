@@ -6,6 +6,7 @@ import com.app.nth_mp3.dto.SignupRequest;
 import com.app.nth_mp3.dto.SocialLoginRequest;
 import com.app.nth_mp3.dto.SocialUserInfo;
 import com.app.nth_mp3.model.Role;
+import com.app.nth_mp3.model.SocialProvider;
 import com.app.nth_mp3.model.User;
 import com.app.nth_mp3.repository.RoleRepository;
 import com.app.nth_mp3.repository.UserRepository;
@@ -105,47 +106,30 @@ public class AuthController {
     }
 
     @PostMapping("/social/login")
-    public ResponseEntity<?> socialLogin(@Valid @RequestBody SocialLoginRequest request) {
+    public ResponseEntity<?> socialLogin(@RequestBody SocialLoginRequest request) {
         try {
-            // Xác thực token và lấy thông tin user
-            SocialUserInfo socialUser = socialLoginService.verifyToken(
-                request.getAccessToken(), 
-                request.getProvider()
-            );
-            
-            // Tìm user theo email
-            User user = userRepository.findByEmail(socialUser.getEmail())
+            SocialUserInfo userInfo = socialLoginService.verifyToken(request.getIdToken(), SocialProvider.GOOGLE);
+            User user = userRepository.findByEmail(userInfo.getEmail())
                 .orElseGet(() -> {
-                    // Tạo user mới nếu chưa tồn tại
                     User newUser = new User();
-                    newUser.setEmail(socialUser.getEmail());
-                    newUser.setUsername(generateUsername(socialUser.getEmail())); 
-                    newUser.setFullName(socialUser.getName());
-                    newUser.setAvatar(socialUser.getPicture());
-                    
+                    newUser.setEmail(userInfo.getEmail());
+                    newUser.setUsername(generateUsername(userInfo.getEmail()));
                     // Tạo mật khẩu ngẫu nhiên cho tài khoản social
-                    String randomPassword = UUID.randomUUID().toString();
-                    newUser.setPassword(encoder.encode(randomPassword));
+                    newUser.setPassword(encoder.encode(UUID.randomUUID().toString()));
                     
-                    // Gán role mặc định
                     Role userRole = roleRepository.findByName("ROLE_USER")
-                        .orElseThrow(() -> new RuntimeException("Error: Role not found"));
+                        .orElseThrow(() -> new RuntimeException("Error: Role not found."));
                     newUser.setRole(userRole);
                     
                     return userRepository.save(newUser);
                 });
-
-            // Tạo JWT token
-            Authentication authentication = authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(user.getUsername(), user.getPassword())
-            );
             
-            SecurityContextHolder.getContext().setAuthentication(authentication);
-            String jwt = jwtUtils.generateJwtToken(authentication);
+            // Tạo JWT token trực tiếp từ thông tin user
+            String jwt = jwtUtils.generateTokenFromUsername(user.getUsername());
             
             return ResponseEntity.ok(new JwtResponse(jwt,
                     user.getId(),
-                    user.getUsername(),
+                    user.getUsername(), 
                     user.getEmail(),
                     user.getRole().getName()));
                 

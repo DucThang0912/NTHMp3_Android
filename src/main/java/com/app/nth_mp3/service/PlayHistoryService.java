@@ -4,7 +4,7 @@ import java.util.List;
 
 import com.app.nth_mp3.model.Playhistory;
 public interface PlayHistoryService {
-    Playhistory addToHistory(Long userId, Long songId);
+    Playhistory addToHistory(Long userId, String spotifyId);
     List<Playhistory> getUserHistory(Long userId);
     void clearHistory(Long userId);
     boolean toggleFavorite(Long userId, String spotifyId);

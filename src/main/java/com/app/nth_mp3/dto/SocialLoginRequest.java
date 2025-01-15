@@ -10,6 +10,6 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 public class SocialLoginRequest {
-    private String accessToken; // token truy cập
-    private SocialProvider provider; // nhà cung cấp
+    private String idToken;  // Đổi từ accessToken sang idToken
+    private SocialProvider provider;
 } 
